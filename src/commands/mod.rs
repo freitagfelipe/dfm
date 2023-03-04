@@ -1,3 +1,6 @@
+mod add;
+
+pub use add::Add;
 use colored::Colorize;
 
 pub trait Command: Sized {
