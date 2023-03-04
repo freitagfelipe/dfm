@@ -1,10 +1,10 @@
 use colored::Colorize;
 use std::env;
 use std::fs;
-use std::path::Path;
+use std::path::PathBuf;
 use std::process::{self, Command, Stdio};
 
-pub fn get_storage_folder_path() -> String {
+pub fn get_storage_folder_path() -> PathBuf {
     if cfg!(any(target_os = "linux", target_os = "macos")) {
         let home_path = env::var("HOME").unwrap_or_else(|err| {
             let err_message = format!(
@@ -16,7 +16,7 @@ pub fn get_storage_folder_path() -> String {
             process::exit(2);
         });
 
-        format!("{home_path}/.config/dotfiles")
+        PathBuf::from(format!("{home_path}/.config/dotfiles"))
     } else {
         let home_path = env::var("APPDATA").unwrap_or_else(|err| {
             let err_message = format!(
@@ -28,7 +28,7 @@ pub fn get_storage_folder_path() -> String {
             process::exit(2);
         });
 
-        format!("{home_path}\\dotfiles")
+        PathBuf::from(format!("{home_path}\\dotfiles"))
     }
 }
 
@@ -60,9 +60,7 @@ fn check_if_git_is_installed() {
 }
 
 fn check_if_storage_dir_is_created() -> bool {
-    let storage_folder_path = get_storage_folder_path();
-
-    Path::new(&storage_folder_path).is_dir()
+    get_storage_folder_path().is_dir()
 }
 
 pub fn setup() {
@@ -74,7 +72,7 @@ pub fn setup() {
 
     let storage_path = get_storage_folder_path();
 
-    if fs::create_dir_all(Path::new(&storage_path)).is_err() {
+    if fs::create_dir_all(&storage_path).is_err() {
         eprintln!(
             "{}",
             "An error ocurred while trying to create the storage folder".red()
@@ -83,7 +81,7 @@ pub fn setup() {
         process::exit(1);
     }
 
-    let storage_path = fs::canonicalize(Path::new(&storage_path)).unwrap_or_else(|err| {
+    let storage_path = fs::canonicalize(&storage_path).unwrap_or_else(|err| {
         let err_message = format!(
             "The following error ocurred when trying to canonicalize the storage path {err}"
         );
