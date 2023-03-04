@@ -83,7 +83,7 @@ pub fn setup() {
 
     let storage_path = fs::canonicalize(&storage_path).unwrap_or_else(|err| {
         let err_message = format!(
-            "The following error ocurred when trying to canonicalize the storage path {err}"
+            "The following error ocurred when trying to canonicalize the storage path: {err}"
         );
 
         eprintln!("{}", err_message.red());
@@ -99,7 +99,7 @@ pub fn setup() {
         .spawn()
         .unwrap_or_else(|err| {
             let err_message =
-                format!("The following error has ocurred while trying to git init {err}");
+                format!("The following error has ocurred while trying to git init: {err}");
 
             eprintln!("{}", err_message.red());
 
