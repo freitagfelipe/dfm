@@ -1,6 +1,7 @@
 use super::Command;
 use crate::setup::get_storage_folder_path;
 use clap::Args;
+use colored::Colorize;
 use std::path::Path;
 use thiserror::Error;
 use walkdir::WalkDir;
@@ -21,6 +22,8 @@ impl Command for List {
     fn execute(self) -> Result<&'static str, Self::Error> {
         let storage_folder_path = get_storage_folder_path();
 
+        let mut index = 1;
+
         for entry in WalkDir::new(storage_folder_path).max_depth(1) {
             let entry = match entry {
                 Ok(entry) => entry,
@@ -40,9 +43,11 @@ impl Command for List {
                 }
             };
 
-            println!("{entry}");
+            println!("{index}. {}", entry.cyan());
+
+            index += 1;
         }
 
-        Ok("Finished listing you files")
+        Ok("Finished listing your files")
     }
 }
