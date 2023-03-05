@@ -1,10 +1,12 @@
 mod add;
 mod list;
+mod remove;
 mod update;
 
 pub use add::Add;
 use colored::Colorize;
 pub use list::List;
+pub use remove::Remove;
 pub use update::Update;
 
 pub trait Command: Sized {
