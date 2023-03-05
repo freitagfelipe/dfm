@@ -1,36 +1,7 @@
+use crate::utils::get_storage_folder_path;
 use colored::Colorize;
-use std::env;
 use std::fs;
-use std::path::PathBuf;
 use std::process::{self, Command, Stdio};
-
-pub fn get_storage_folder_path() -> PathBuf {
-    if cfg!(any(target_os = "linux", target_os = "macos")) {
-        let home_path = env::var("HOME").unwrap_or_else(|err| {
-            let err_message = format!(
-                "The following error ocurred while trying to get the HOME enviroment variable: {err}"
-            );
-
-            eprintln!("{}", err_message.red());
-
-            process::exit(2);
-        });
-
-        PathBuf::from(format!("{home_path}/.config/dotfiles"))
-    } else {
-        let home_path = env::var("APPDATA").unwrap_or_else(|err| {
-            let err_message = format!(
-                "The following error ocurred while trying to get the APPDATA enviroment variable: {err}"
-            );
-
-            eprintln!("{}", err_message.red());
-
-            process::exit(2);
-        });
-
-        PathBuf::from(format!("{home_path}\\dotfiles"))
-    }
-}
 
 fn check_if_git_is_installed() {
     let command_code = Command::new("git")
@@ -59,20 +30,16 @@ fn check_if_git_is_installed() {
     }
 }
 
-fn check_if_storage_dir_is_created() -> bool {
-    get_storage_folder_path().is_dir()
-}
-
 pub fn setup() {
     check_if_git_is_installed();
 
-    if check_if_storage_dir_is_created() {
+    let storage_folder_path = get_storage_folder_path();
+
+    if storage_folder_path.is_dir() {
         return;
     }
 
-    let storage_path = get_storage_folder_path();
-
-    if fs::create_dir_all(&storage_path).is_err() {
+    if fs::create_dir_all(&storage_folder_path).is_err() {
         eprintln!(
             "{}",
             "An error ocurred while trying to create the storage folder".red()
@@ -81,7 +48,7 @@ pub fn setup() {
         process::exit(1);
     }
 
-    let storage_path = fs::canonicalize(&storage_path).unwrap_or_else(|err| {
+    let storage_path = fs::canonicalize(&storage_folder_path).unwrap_or_else(|err| {
         let err_message = format!(
             "The following error ocurred when trying to canonicalize the storage path: {err}"
         );
