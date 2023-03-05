@@ -1,9 +1,11 @@
 mod add;
 mod list;
+mod update;
 
 pub use add::Add;
 use colored::Colorize;
 pub use list::List;
+pub use update::Update;
 
 pub trait Command: Sized {
     type Error: std::error::Error;
