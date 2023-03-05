@@ -1,9 +1,10 @@
 use super::Command;
 use crate::{setup::get_storage_folder_path, utils::check_if_file_exists};
 use clap::Args;
+use std::env;
+use std::fs;
 use std::path::Path;
 use std::process::{Command as Cmd, Stdio};
-use std::{env, fs};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -16,9 +17,10 @@ pub enum Error {
     Unknown(String),
 }
 
-/// Add a file to the repository
+/// Adds a file to the repository
 #[derive(Debug, Args)]
 pub struct Add {
+    /// File name
     name: String,
 }
 

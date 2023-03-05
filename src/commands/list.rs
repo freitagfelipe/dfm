@@ -11,7 +11,7 @@ pub enum Error {
     Unknown(String),
 }
 
-/// List all added files
+/// Lists all added files
 #[derive(Debug, Args)]
 pub struct List;
 

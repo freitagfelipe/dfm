@@ -20,9 +20,10 @@ pub enum Error {
     Unknown(String),
 }
 
-/// Add a file to the repository
+/// Updates a file from the repository
 #[derive(Debug, Args)]
 pub struct Update {
+    /// File name
     name: String,
 }
 
