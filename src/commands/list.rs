@@ -1,5 +1,5 @@
 use super::Command;
-use crate::setup::get_storage_folder_path;
+use crate::utils::get_storage_folder_path;
 use clap::Args;
 use colored::Colorize;
 use std::path::Path;
@@ -20,7 +20,10 @@ impl Command for List {
     type Error = Error;
 
     fn execute(self) -> Result<&'static str, Self::Error> {
-        let storage_folder_path = get_storage_folder_path();
+        let storage_folder_path = match get_storage_folder_path().canonicalize() {
+            Ok(path) => path,
+            Err(err) => return Err(Error::Unknown(err.to_string())),
+        };
 
         let mut index = 1;
 

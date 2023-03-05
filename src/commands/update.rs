@@ -1,5 +1,5 @@
 use super::Command;
-use crate::{setup::get_storage_folder_path, utils::check_if_file_exists};
+use crate::utils::{check_if_file_exists, get_storage_folder_path};
 use clap::Args;
 use std::env;
 use std::fs::{self, File};
@@ -78,7 +78,10 @@ impl Command for Update {
     type Error = Error;
 
     fn execute(self) -> Result<&'static str, Self::Error> {
-        let storage_folder_path = get_storage_folder_path();
+        let storage_folder_path = match get_storage_folder_path().canonicalize() {
+            Ok(path) => path,
+            Err(err) => return Err(Error::Unknown(err.to_string())),
+        };
 
         let current_dir = match env::current_dir() {
             Ok(path) => path,
@@ -119,11 +122,6 @@ impl Command for Update {
                 "An error ocurred while trying to copy the file".to_string(),
             ));
         }
-
-        let storage_folder_path = match fs::canonicalize(&storage_folder_path) {
-            Ok(path) => path,
-            Err(err) => return Err(Error::Unknown(err.to_string())),
-        };
 
         execute_git_commands(&storage_folder_path, &self.name)?;
 

@@ -1,5 +1,5 @@
 use super::Command;
-use crate::{setup::get_storage_folder_path, utils::check_if_file_exists};
+use crate::utils::{check_if_file_exists, get_storage_folder_path};
 use clap::Args;
 use std::fs;
 use std::path::Path;
@@ -49,16 +49,14 @@ impl Command for Remove {
     type Error = Error;
 
     fn execute(self) -> Result<&'static str, Self::Error> {
-        let storage_folder_path = get_storage_folder_path();
+        let storage_folder_path = match get_storage_folder_path().canonicalize() {
+            Ok(path) => path,
+            Err(err) => return Err(Error::Unknown(err.to_string())),
+        };
 
         if !check_if_file_exists(&storage_folder_path, &self.name) {
             return Err(Error::FileDoesNotExists);
         }
-
-        let storage_folder_path = match fs::canonicalize(&storage_folder_path) {
-            Ok(path) => path,
-            Err(err) => return Err(Error::Unknown(err.to_string())),
-        };
 
         if let Err(err) = fs::remove_file(storage_folder_path.join(&self.name)) {
             return Err(Error::Unknown(err.to_string()));
