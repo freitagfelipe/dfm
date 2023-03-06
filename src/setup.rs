@@ -1,75 +1,135 @@
 use crate::utils::get_storage_folder_path;
-use colored::Colorize;
-use std::fs;
-use std::process::{self, Command, Stdio};
+use std::fs::{self, File};
+use std::io::Write;
+use std::path::Path;
+use std::process::{Command, Stdio};
+use thiserror::Error;
 
-fn check_if_git_is_installed() {
-    let command_code = Command::new("git")
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("You need to have git installed to use DFM")]
+    NeedGit,
+    #[error("Something wrong happened: {0}, when trying to: {1}")]
+    Unknown(String, &'static str),
+}
+
+fn check_if_git_is_installed() -> Result<(), Error> {
+    let status = match Command::new("git")
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .status()
-        .unwrap_or_else(|err| {
-            let err_message =
-                format!("The following error ocurred while checking if git is installed: {err}");
+    {
+        Ok(status) => status,
+        Err(err) => return Err(Error::Unknown(err.to_string(), "execute git")),
+    };
 
-            eprintln!("{}", err_message.red());
-
-            process::exit(1);
-        })
-        .code()
-        .unwrap_or_else(|| {
-            eprintln!("{}", "Process terminated by a signal".red());
-
-            process::exit(1);
-        });
+    let Some(command_code) = status.code() else {
+        return Err(Error::Unknown("process terminated by signal".to_string(), "get git status code"));
+    };
 
     if command_code != 1 {
-        eprintln!("{}", "You need to have git installed to use DFM".red());
-
-        process::exit(2);
+        return Err(Error::NeedGit);
     }
+
+    Ok(())
 }
 
-pub fn setup() {
-    check_if_git_is_installed();
+fn create_git_ignore(storage_folder_path: &Path) -> Result<(), Error> {
+    let mut file = match File::create(storage_folder_path.join(".gitignore")) {
+        Ok(file) => file,
+        Err(err) => return Err(Error::Unknown(err.to_string(), "create a .gitignore file")),
+    };
+
+    if let Err(err) = file.write_all(b"remote.txt") {
+        return Err(Error::Unknown(
+            err.to_string(),
+            "write to the .gitignore file",
+        ));
+    };
+
+    Ok(())
+}
+
+fn execute_git_commands(storage_folder_path: &Path) -> Result<(), Error> {
+    let mut handler = match Command::new("git")
+        .arg("init")
+        .current_dir(storage_folder_path)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+    {
+        Ok(handler) => handler,
+        Err(err) => {
+            return Err(Error::Unknown(err.to_string(), "execute git init"));
+        }
+    };
+
+    if let Err(err) = handler.wait() {
+        return Err(Error::Unknown(err.to_string(), "wait git init finish"));
+    }
+
+    handler = match Command::new("git")
+        .args(["add", "."])
+        .current_dir(storage_folder_path)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+    {
+        Ok(handler) => handler,
+        Err(err) => return Err(Error::Unknown(err.to_string(), "execute git add")),
+    };
+
+    if let Err(err) = handler.wait() {
+        return Err(Error::Unknown(err.to_string(), "wait git add finish"));
+    }
+
+    handler = match Command::new("git")
+        .args(["commit", "-m", "\"Add .gitignore\""])
+        .current_dir(storage_folder_path)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+    {
+        Ok(handler) => handler,
+        Err(err) => return Err(Error::Unknown(err.to_string(), "execute git commit")),
+    };
+
+    if let Err(err) = handler.wait() {
+        return Err(Error::Unknown(err.to_string(), "wait git commit finish"));
+    }
+
+    Ok(())
+}
+
+pub fn setup() -> Result<(), Error> {
+    check_if_git_is_installed()?;
 
     let storage_folder_path = get_storage_folder_path();
 
     if storage_folder_path.is_dir() {
-        return;
+        return Ok(());
     }
 
-    if fs::create_dir_all(&storage_folder_path).is_err() {
-        eprintln!(
-            "{}",
-            "An error ocurred while trying to create the storage folder".red()
-        );
-
-        process::exit(1);
+    if let Err(err) = fs::create_dir_all(&storage_folder_path) {
+        return Err(Error::Unknown(
+            err.to_string(),
+            "create the storage directory",
+        ));
     }
 
-    let storage_path = fs::canonicalize(&storage_folder_path).unwrap_or_else(|err| {
-        let err_message = format!(
-            "The following error ocurred when trying to canonicalize the storage path: {err}"
-        );
+    let storage_folder_path = match storage_folder_path.canonicalize() {
+        Ok(path) => path,
+        Err(err) => {
+            return Err(Error::Unknown(
+                err.to_string(),
+                "canonicalize the storage path",
+            ));
+        }
+    };
 
-        eprintln!("{}", err_message.red());
+    create_git_ignore(&storage_folder_path)?;
 
-        process::exit(1);
-    });
+    execute_git_commands(&storage_folder_path)?;
 
-    Command::new("git")
-        .arg("init")
-        .current_dir(storage_path)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-        .unwrap_or_else(|err| {
-            let err_message =
-                format!("The following error has ocurred while trying to git init: {err}");
-
-            eprintln!("{}", err_message.red());
-
-            process::exit(1);
-        });
+    Ok(())
 }
