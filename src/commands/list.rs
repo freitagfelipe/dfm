@@ -8,8 +8,8 @@ use walkdir::WalkDir;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("Something wrong happened: {0}")]
-    Unknown(String),
+    #[error("Something wrong happened: {0}, when trying to: {1}")]
+    Unknown(String, &'static str),
 }
 
 /// Lists all added files
@@ -19,10 +19,15 @@ pub struct List;
 impl Command for List {
     type Error = Error;
 
-    fn execute(self) -> Result<&'static str, Self::Error> {
+    fn execute(self) -> Result<String, Self::Error> {
         let storage_folder_path = match get_storage_folder_path().canonicalize() {
             Ok(path) => path,
-            Err(err) => return Err(Error::Unknown(err.to_string())),
+            Err(err) => {
+                return Err(Error::Unknown(
+                    err.to_string(),
+                    "canonicalize the storage path",
+                ))
+            }
         };
 
         let mut index = 1;
@@ -30,7 +35,7 @@ impl Command for List {
         for entry in WalkDir::new(storage_folder_path).max_depth(1) {
             let entry = match entry {
                 Ok(entry) => entry,
-                Err(err) => return Err(Error::Unknown(err.to_string())),
+                Err(err) => return Err(Error::Unknown(err.to_string(), "get a dir entry")),
             };
 
             if Path::new(&entry.path()).is_dir() {
@@ -41,7 +46,8 @@ impl Command for List {
                 Some(entry) => entry,
                 None => {
                     return Err(Error::Unknown(
-                        "can not get the file name string".to_string(),
+                        "invalid UTF-8".to_string(),
+                        "convert OsStr to str",
                     ))
                 }
             };
@@ -51,6 +57,6 @@ impl Command for List {
             index += 1;
         }
 
-        Ok("Finished listing your files")
+        Ok("Finished listing your files".to_string())
     }
 }
