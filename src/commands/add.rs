@@ -13,8 +13,8 @@ pub enum Error {
     FileAlreadyAdded,
     #[error("File does not exists in the current folder")]
     FileDoesNotExists,
-    #[error("Something wrong happened: {0}")]
-    Unknown(String),
+    #[error("Something wrong happened: {0}, when trying to: {1}")]
+    Unknown(String, &'static str),
 }
 
 /// Adds a file to the repository
@@ -25,24 +25,29 @@ pub struct Add {
 }
 
 fn execute_git_commands(storage_folder: &Path, file_name: &str) -> Result<(), Error> {
-    if let Err(err) = Cmd::new("git")
+    let mut handler = match Cmd::new("git")
         .args(["add", "."])
         .current_dir(storage_folder)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
     {
-        return Err(Error::Unknown(err.to_string()));
+        Ok(handler) => handler,
+        Err(err) => return Err(Error::Unknown(err.to_string(), "execute git add .")),
+    };
+
+    if let Err(err) = handler.wait() {
+        return Err(Error::Unknown(err.to_string(), "wait git add . finish"));
     }
 
     if let Err(err) = Cmd::new("git")
-        .args(["commit", "-m", &format!("\"Add {file_name}\"")])
+        .args(["commit", "-m", &format!("Add {file_name}")])
         .current_dir(storage_folder)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
     {
-        return Err(Error::Unknown(err.to_string()));
+        return Err(Error::Unknown(err.to_string(), "execute git commit"));
     };
 
     Ok(())
@@ -51,16 +56,21 @@ fn execute_git_commands(storage_folder: &Path, file_name: &str) -> Result<(), Er
 impl Command for Add {
     type Error = Error;
 
-    fn execute(self) -> Result<&'static str, Self::Error> {
+    fn execute(self) -> Result<String, Self::Error> {
         let storage_folder_path = match get_storage_folder_path().canonicalize() {
             Ok(path) => path,
-            Err(err) => return Err(Error::Unknown(err.to_string())),
+            Err(err) => {
+                return Err(Error::Unknown(
+                    err.to_string(),
+                    "canonicalize the storage path",
+                ))
+            }
         };
 
         let current_dir = match env::current_dir() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Unknown(err.to_string()));
+                return Err(Error::Unknown(err.to_string(), "get the current dir"));
             }
         };
 
@@ -72,19 +82,15 @@ impl Command for Add {
             return Err(Error::FileAlreadyAdded);
         }
 
-        if fs::copy(
+        if let Err(err) = fs::copy(
             current_dir.join(&self.name),
             storage_folder_path.join(&self.name),
-        )
-        .is_err()
-        {
-            return Err(Error::Unknown(
-                "An error ocurred while trying to copy the file".to_string(),
-            ));
+        ) {
+            return Err(Error::Unknown(err.to_string(), "copy the file"));
         }
 
         execute_git_commands(&storage_folder_path, &self.name)?;
 
-        Ok("Successfully added the file")
+        Ok("Successfully added the file".to_string())
     }
 }
