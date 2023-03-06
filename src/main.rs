@@ -1,3 +1,9 @@
+use dfm::{cli, setup};
+
 fn main() {
-    println!("Hello, world!");
+    setup::setup();
+
+    let cli = cli::parse();
+
+    cli.command.invoke();
 }
