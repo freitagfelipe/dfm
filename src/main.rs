@@ -1,7 +1,12 @@
+use colored::Colorize;
 use dfm::{cli, setup};
 
 fn main() {
-    setup::setup();
+    if let Err(err) = setup::setup() {
+        eprintln!("{}", err.to_string().red());
+
+        return;
+    }
 
     let cli = cli::parse();
 
