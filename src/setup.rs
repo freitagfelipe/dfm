@@ -84,7 +84,7 @@ fn execute_git_commands(storage_folder_path: &Path) -> Result<(), Error> {
     }
 
     handler = match Command::new("git")
-        .args(["commit", "-m", "\"Add .gitignore\""])
+        .args(["commit", "-m", "Add .gitignore"])
         .current_dir(storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
