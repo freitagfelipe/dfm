@@ -1,18 +1,25 @@
 mod add;
 mod list;
+mod push;
+mod remote;
 mod remove;
+mod reset;
 mod update;
 
 pub use add::Add;
 use colored::Colorize;
 pub use list::List;
+pub use push::Push;
+pub use remote::Remote;
 pub use remove::Remove;
+pub use reset::Reset;
+use std::error;
 pub use update::Update;
 
 pub trait Command: Sized {
-    type Error: std::error::Error;
+    type Error: error::Error;
 
-    fn execute(self) -> Result<&'static str, Self::Error>;
+    fn execute(self) -> Result<String, Self::Error>;
 
     fn error(err: Self::Error) {
         println!("{}", err.to_string().red());
