@@ -18,17 +18,24 @@ pub enum Error {
 pub struct Push;
 
 fn execute_git_commands(storage_folder: &Path) -> Result<(), Error> {
-    if let Err(err) = Cmd::new("git")
+    let mut handler = match Cmd::new("git")
         .args(["push", "origin", "main"])
         .current_dir(storage_folder)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
     {
-        return Err(Error::Unknown(
-            err.to_string(),
-            "execute git push origin main",
-        ));
+        Ok(handler) => handler,
+        Err(err) => {
+            return Err(Error::Unknown(
+                err.to_string(),
+                "execute git push origin main",
+            ))
+        }
+    };
+
+    if let Err(err) = handler.wait() {
+        return Err(Error::Unknown(err.to_string(), "wait git push origin main"));
     }
 
     Ok(())
