@@ -8,6 +8,8 @@ use walkdir::WalkDir;
 
 #[derive(Debug, Error)]
 pub enum Error {
+    #[error("Your remote repository is empty")]
+    EmptyRepository,
     #[error("{0}")]
     GetStorageFolderPath(String),
     #[error("You need to set a remote repository before use DFM")]
@@ -16,7 +18,7 @@ pub enum Error {
     Unknown(String, &'static str),
 }
 
-/// Lists all the files that are in the repository
+/// Lists all the files that are in the remote repository
 #[derive(Debug, Args)]
 pub struct List;
 
@@ -24,12 +26,12 @@ impl Command for List {
     type Error = Error;
 
     fn execute(self) -> Result<String, Self::Error> {
-        let storage_folder_path = match utils::get_storage_folder_path() {
+        let git_storage_folder_path = match utils::get_git_storage_folder_path() {
             Ok(path) => path,
             Err(err) => return Err(Error::GetStorageFolderPath(err.to_string())),
         };
 
-        let storage_folder_path = match storage_folder_path.canonicalize() {
+        let git_storage_folder_path = match git_storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
                 return Err(Error::Unknown(
@@ -45,7 +47,7 @@ impl Command for List {
 
         let mut index = 1;
 
-        for entry in WalkDir::new(storage_folder_path).max_depth(1) {
+        for entry in WalkDir::new(git_storage_folder_path).max_depth(1) {
             let entry = match entry {
                 Ok(entry) => entry,
                 Err(err) => return Err(Error::Unknown(err.to_string(), "get a dir entry")),
@@ -68,6 +70,10 @@ impl Command for List {
             println!("{index}. {}", entry.cyan());
 
             index += 1;
+        }
+
+        if index == 1 {
+            return Err(Error::EmptyRepository);
         }
 
         Ok("Finished listing your files".to_string())
