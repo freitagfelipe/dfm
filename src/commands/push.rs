@@ -17,10 +17,10 @@ pub enum Error {
 #[derive(Debug, Args)]
 pub struct Push;
 
-fn execute_git_commands(storage_folder: &Path) -> Result<(), Error> {
+fn execute_git_commands(storage_folder_path: &Path) -> Result<(), Error> {
     let mut handler = match Cmd::new("git")
         .args(["push", "origin", "main"])
-        .current_dir(storage_folder)
+        .current_dir(storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
@@ -50,7 +50,7 @@ impl Command for Push {
             Err(err) => {
                 return Err(Error::Unknown(
                     err.to_string(),
-                    "canonicalize the storage path",
+                    "canonicalize the storage folder path",
                 ))
             }
         };

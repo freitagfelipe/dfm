@@ -39,10 +39,10 @@ pub enum Subcommands {
     Set(Set),
 }
 
-fn execute_git_command(storage_folder: &Path, link: &str) -> Result<(), Error> {
+fn execute_git_command(storage_folder_path: &Path, link: &str) -> Result<(), Error> {
     let mut handler = match Cmd::new("git")
         .args(["remote", "add", "origin", link])
-        .current_dir(storage_folder)
+        .current_dir(storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
@@ -65,7 +65,7 @@ fn execute_git_command(storage_folder: &Path, link: &str) -> Result<(), Error> {
 
     let mut handler = match Cmd::new("git")
         .args(["pull", "origin", "main"])
-        .current_dir(storage_folder)
+        .current_dir(storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
@@ -137,7 +137,7 @@ impl Command for Remote {
             Err(err) => {
                 return Err(Error::Unknown(
                     err.to_string(),
-                    "canonicalize the storage path",
+                    "canonicalize the storage folder path",
                 ))
             }
         };

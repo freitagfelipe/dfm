@@ -9,9 +9,9 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("File already added")]
+    #[error("File already added to the DFM repository")]
     FileAlreadyAdded,
-    #[error("File does not exists in the current folder")]
+    #[error("File does not exists in your current directory")]
     FileDoesNotExists,
     #[error("You can just add files to the repository")]
     NotAFile,
@@ -26,10 +26,10 @@ pub struct Add {
     name: String,
 }
 
-fn execute_git_commands(storage_folder: &Path, file_name: &str) -> Result<(), Error> {
+fn execute_git_commands(storage_folder_path: &Path, file_name: &str) -> Result<(), Error> {
     let mut handler = match Cmd::new("git")
         .args(["add", "."])
-        .current_dir(storage_folder)
+        .current_dir(storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
@@ -44,7 +44,7 @@ fn execute_git_commands(storage_folder: &Path, file_name: &str) -> Result<(), Er
 
     if let Err(err) = Cmd::new("git")
         .args(["commit", "-m", &format!("Add {file_name}")])
-        .current_dir(storage_folder)
+        .current_dir(storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
@@ -64,7 +64,7 @@ impl Command for Add {
             Err(err) => {
                 return Err(Error::Unknown(
                     err.to_string(),
-                    "canonicalize the storage path",
+                    "canonicalize the storage folder path",
                 ))
             }
         };

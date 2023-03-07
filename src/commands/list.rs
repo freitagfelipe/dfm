@@ -25,7 +25,7 @@ impl Command for List {
             Err(err) => {
                 return Err(Error::Unknown(
                     err.to_string(),
-                    "canonicalize the storage path",
+                    "canonicalize the storage folder path",
                 ))
             }
         };
