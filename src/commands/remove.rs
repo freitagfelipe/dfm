@@ -28,31 +28,12 @@ pub struct Remove {
 }
 
 fn execute_git_commands(storage_folder_path: &Path, file_name: &str) -> Result<(), Error> {
-    let mut handler = match git::add_all(storage_folder_path) {
-        Ok(handler) => handler,
-        Err(err) => return Err(Error::GitCommand(err.to_string())),
-    };
-
-    if let Err(err) = handler.wait() {
-        return Err(Error::Unknown(err.to_string(), "wait git add finish"));
-    }
-
-    let mut handler = match git::commit(storage_folder_path, &format!("Remove {file_name}")) {
-        Ok(handler) => handler,
-        Err(err) => return Err(Error::GitCommand(err.to_string())),
-    };
-
-    if let Err(err) = handler.wait() {
-        return Err(Error::Unknown(err.to_string(), "wait git commit finish"));
-    }
-
-    let mut handler = match git::push(storage_folder_path) {
-        Ok(handler) => handler,
-        Err(err) => return Err(Error::GitCommand(err.to_string())),
-    };
-
-    if let Err(err) = handler.wait() {
-        return Err(Error::Unknown(err.to_string(), "wait git push finish"));
+    if let Err(err) = git::ExecuterBuilder::new(storage_folder_path)
+        .run_commit(&format!("Remove {file_name}"))
+        .build()
+        .run()
+    {
+        return Err(Error::GitCommand(err.to_string()));
     }
 
     Ok(())

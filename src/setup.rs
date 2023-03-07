@@ -56,31 +56,13 @@ pub fn create_git_ignore(storage_folder_path: &Path) -> Result<(), Error> {
 }
 
 pub fn execute_git_commands(storage_folder_path: &Path) -> Result<(), Error> {
-    let mut handler = match git::init(storage_folder_path) {
-        Ok(handler) => handler,
-        Err(err) => return Err(Error::GitCommand(err.to_string())),
-    };
-
-    if let Err(err) = handler.wait() {
-        return Err(Error::Unknown(err.to_string(), "wait git init finish"));
-    }
-
-    let mut handler = match git::add_all(storage_folder_path) {
-        Ok(handler) => handler,
-        Err(err) => return Err(Error::GitCommand(err.to_string())),
-    };
-
-    if let Err(err) = handler.wait() {
-        return Err(Error::Unknown(err.to_string(), "wait git add finish"));
-    }
-
-    let mut handler = match git::commit(storage_folder_path, "Add .gitignore") {
-        Ok(handler) => handler,
-        Err(err) => return Err(Error::GitCommand(err.to_string())),
-    };
-
-    if let Err(err) = handler.wait() {
-        return Err(Error::Unknown(err.to_string(), "wait git commit finish"));
+    if let Err(err) = git::ExecuterBuilder::new(storage_folder_path)
+        .run_init()
+        .run_commit("Add .gitignore")
+        .build()
+        .run()
+    {
+        return Err(Error::GitCommand(err.to_string()));
     }
 
     Ok(())
