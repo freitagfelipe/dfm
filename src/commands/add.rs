@@ -9,9 +9,9 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("File already added to the DFM repository")]
+    #[error("File already added to the remote repository")]
     FileAlreadyAdded,
-    #[error("File does not exists in your current directory")]
+    #[error("File does not exist in your current directory")]
     FileDoesNotExists,
     #[error("You can just add files to the repository")]
     NotAFile,
@@ -25,7 +25,7 @@ pub enum Error {
     Unknown(String, &'static str),
 }
 
-/// Adds a file to the repository
+/// Adds a file to the remote repository
 #[derive(Debug, Args)]
 pub struct Add {
     /// File name
@@ -95,6 +95,6 @@ impl Command for Add {
 
         execute_git_commands(&git_storage_folder_path, &self.name)?;
 
-        Ok("Successfully added the file and synchronized with the remote repository".to_string())
+        Ok("Successfully added the file and synchronized the local repository with the remote repository".to_string())
     }
 }

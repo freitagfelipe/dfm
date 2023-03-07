@@ -9,7 +9,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("File does not exists in the current folder")]
+    #[error("File does not exist in the current folder")]
     FileDoesNotExists,
     #[error("File not added")]
     FileNotAdded,
@@ -25,7 +25,7 @@ pub enum Error {
     Unknown(String, &'static str),
 }
 
-/// Updates a file from the repository
+/// Updates a file from the remote repository
 #[derive(Debug, Args)]
 pub struct Update {
     /// File name
@@ -128,6 +128,6 @@ impl Command for Update {
 
         execute_git_commands(&git_storage_folder_path, &self.name)?;
 
-        Ok("Successfully updated the file and synchronized with the remote repository".to_string())
+        Ok("Successfully updated the file and synchronized the local repository with the remote repository".to_string())
     }
 }

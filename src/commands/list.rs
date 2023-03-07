@@ -16,7 +16,7 @@ pub enum Error {
     Unknown(String, &'static str),
 }
 
-/// Lists all added files
+/// Lists all the files that are in the repository
 #[derive(Debug, Args)]
 pub struct List;
 

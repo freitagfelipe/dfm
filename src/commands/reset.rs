@@ -17,7 +17,7 @@ pub enum Error {
     Unknown(String, &'static str),
 }
 
-/// Resets DFM to the initial state. Be careful using that.
+/// Resets your DFM to the initial state (be careful using that)
 #[derive(Debug, Args)]
 pub struct Reset;
 

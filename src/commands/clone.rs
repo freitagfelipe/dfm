@@ -6,7 +6,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("File does not exists in the repository")]
+    #[error("File does not exist in the repository")]
     FileDoesNotExists,
     #[error("{0}")]
     GetStorageFolderPath(String),
@@ -14,10 +14,10 @@ pub enum Error {
     Unknown(String, &'static str),
 }
 
-/// Clones a file from the DFM repository to your current directory
+/// Clones a file from the repository to your current directory
 #[derive(Debug, Args)]
 pub struct Clone {
-    /// The name of the file to be cloned
+    /// File name
     name: String,
 }
 
@@ -58,6 +58,6 @@ impl Command for Clone {
             return Err(Error::Unknown(err.to_string(), "copy the file"));
         }
 
-        Ok("Successfully clone the file".to_string())
+        Ok("Successfully cloned the file to your current directory".to_string())
     }
 }

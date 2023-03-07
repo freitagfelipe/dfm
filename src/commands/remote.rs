@@ -9,7 +9,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("Remote repository already added if you want to change you need to reset DFM")]
+    #[error("Remote repository already added if you want to change that you need to reset your DFM")]
     AlreadyAdded,
     #[error("Remote repository not setted yet")]
     NotSetted,
@@ -21,17 +21,17 @@ pub enum Error {
     Unknown(String, &'static str),
 }
 
-/// Manages the remote repository.
+/// Manages the remote repository
 #[derive(Debug, Args)]
 pub struct Remote {
     #[command(subcommand)]
     subcommands: Subcommands,
 }
 
-/// Sets the remote repository to the passed link. You can only do that once without resetting DFM.
+/// Sets the remote repository to the passed link (you can only do that once without resetting DFM)
 #[derive(Debug, Args)]
 pub struct Set {
-    /// Link to the remote repository
+    /// Remote repository link
     link: String,
 }
 
@@ -76,7 +76,7 @@ fn set_remote_link(
 
     execute_git_command(git_storage_folder_path, link)?;
 
-    Ok("Successfully setted the remote repository and synchronized".to_string())
+    Ok("Successfully setted the remote repository and synchronized the local repository with the remote repository".to_string())
 }
 
 fn show_remote_link(storage_folder_path: &Path) -> Result<String, Error> {

@@ -8,7 +8,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("File does not exists in the repository")]
+    #[error("File does not exist in the repository")]
     FileDoesNotExists,
     #[error("{0}")]
     GetStorageFolderPath(String),
@@ -20,7 +20,7 @@ pub enum Error {
     Unknown(String, &'static str),
 }
 
-/// Removes a file of the repository
+/// Removes a file from the remote repository
 #[derive(Debug, Args)]
 pub struct Remove {
     /// File name
@@ -72,6 +72,6 @@ impl Command for Remove {
 
         execute_git_commands(&storage_folder_path, &self.name)?;
 
-        Ok("Successfully removed the file and synchronized with the remote repository".to_string())
+        Ok("Successfully removed the file and synchronized the local repository with the remote repository".to_string())
     }
 }
