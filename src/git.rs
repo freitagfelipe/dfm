@@ -9,7 +9,7 @@ pub enum Error {
 }
 
 pub struct Executer<'a> {
-    storage_folder_path: &'a Path,
+    git_storage_folder_path: &'a Path,
     commit_message: String,
     remote_link: String,
     run_init: bool,
@@ -21,19 +21,19 @@ pub struct Executer<'a> {
 impl Executer<'_> {
     pub fn run(self) -> Result<(), Error> {
         if self.run_init {
-            if let Err(err) = init(self.storage_folder_path)?.wait() {
+            if let Err(err) = init(self.git_storage_folder_path)?.wait() {
                 return Err(Error::Unknown(err.to_string(), "wait git init"));
             }
         }
 
         if self.run_remote_add {
-            if let Err(err) = remote_add(self.storage_folder_path, &self.remote_link)?.wait() {
+            if let Err(err) = remote_add(self.git_storage_folder_path, &self.remote_link)?.wait() {
                 return Err(Error::Unknown(err.to_string(), "wait git remote add"));
             }
         }
 
         if self.run_pull || self.run_commit {
-            if let Err(err) = pull(self.storage_folder_path)?.wait() {
+            if let Err(err) = pull(self.git_storage_folder_path)?.wait() {
                 return Err(Error::Unknown(err.to_string(), "wait git pull"));
             }
         }
@@ -42,15 +42,15 @@ impl Executer<'_> {
             return Ok(());
         }
 
-        if let Err(err) = add_all(self.storage_folder_path)?.wait() {
+        if let Err(err) = add_all(self.git_storage_folder_path)?.wait() {
             return Err(Error::Unknown(err.to_string(), "wait git add"));
         }
 
-        if let Err(err) = commit(self.storage_folder_path, &self.commit_message)?.wait() {
+        if let Err(err) = commit(self.git_storage_folder_path, &self.commit_message)?.wait() {
             return Err(Error::Unknown(err.to_string(), "wait git commit"));
         }
 
-        if let Err(err) = push(self.storage_folder_path)?.wait() {
+        if let Err(err) = push(self.git_storage_folder_path)?.wait() {
             return Err(Error::Unknown(err.to_string(), "wait git push"));
         }
 
@@ -59,7 +59,7 @@ impl Executer<'_> {
 }
 
 pub struct ExecuterBuilder<'a> {
-    storage_folder_path: &'a Path,
+    git_storage_folder_path: &'a Path,
     commit_message: String,
     remote_link: String,
     run_init: bool,
@@ -69,9 +69,9 @@ pub struct ExecuterBuilder<'a> {
 }
 
 impl<'a> ExecuterBuilder<'a> {
-    pub fn new(storage_folder_path: &'a Path) -> Self {
+    pub fn new(git_storage_folder_path: &'a Path) -> Self {
         ExecuterBuilder {
-            storage_folder_path,
+            git_storage_folder_path,
             run_init: false,
             commit_message: String::new(),
             remote_link: String::new(),
@@ -109,7 +109,7 @@ impl<'a> ExecuterBuilder<'a> {
 
     pub fn build(self) -> Executer<'a> {
         Executer {
-            storage_folder_path: self.storage_folder_path,
+            git_storage_folder_path: self.git_storage_folder_path,
             run_init: self.run_init,
             commit_message: self.commit_message,
             remote_link: self.remote_link,
@@ -120,10 +120,10 @@ impl<'a> ExecuterBuilder<'a> {
     }
 }
 
-pub fn init(storage_folder_path: &Path) -> Result<Child, Error> {
+pub fn init(git_storage_folder_path: &Path) -> Result<Child, Error> {
     let handler = match Command::new("git")
         .arg("init")
-        .current_dir(storage_folder_path)
+        .current_dir(git_storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
@@ -137,10 +137,10 @@ pub fn init(storage_folder_path: &Path) -> Result<Child, Error> {
     Ok(handler)
 }
 
-pub fn add_all(storage_folder_path: &Path) -> Result<Child, Error> {
+pub fn add_all(git_storage_folder_path: &Path) -> Result<Child, Error> {
     let handler = match Command::new("git")
         .args(["add", "."])
-        .current_dir(storage_folder_path)
+        .current_dir(git_storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
@@ -152,10 +152,10 @@ pub fn add_all(storage_folder_path: &Path) -> Result<Child, Error> {
     Ok(handler)
 }
 
-pub fn commit(storage_folder_path: &Path, commit_name: &str) -> Result<Child, Error> {
+pub fn commit(git_storage_folder_path: &Path, commit_name: &str) -> Result<Child, Error> {
     let handler = match Command::new("git")
         .args(["commit", "-m", commit_name])
-        .current_dir(storage_folder_path)
+        .current_dir(git_storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
@@ -167,10 +167,10 @@ pub fn commit(storage_folder_path: &Path, commit_name: &str) -> Result<Child, Er
     Ok(handler)
 }
 
-pub fn push(storage_folder_path: &Path) -> Result<Child, Error> {
+pub fn push(git_storage_folder_path: &Path) -> Result<Child, Error> {
     let handler = match Command::new("git")
         .args(["push", "origin", "main"])
-        .current_dir(storage_folder_path)
+        .current_dir(git_storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
@@ -187,10 +187,10 @@ pub fn push(storage_folder_path: &Path) -> Result<Child, Error> {
     Ok(handler)
 }
 
-pub fn remote_add(storage_folder_path: &Path, link: &str) -> Result<Child, Error> {
+pub fn remote_add(git_storage_folder_path: &Path, link: &str) -> Result<Child, Error> {
     let handler = match Command::new("git")
         .args(["remote", "add", "origin", link])
-        .current_dir(storage_folder_path)
+        .current_dir(git_storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
@@ -207,10 +207,10 @@ pub fn remote_add(storage_folder_path: &Path, link: &str) -> Result<Child, Error
     Ok(handler)
 }
 
-pub fn pull(storage_folder_path: &Path) -> Result<Child, Error> {
+pub fn pull(git_storage_folder_path: &Path) -> Result<Child, Error> {
     let handler = match Command::new("git")
         .args(["pull", "origin", "main"])
-        .current_dir(storage_folder_path)
+        .current_dir(git_storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()

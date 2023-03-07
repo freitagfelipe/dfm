@@ -39,7 +39,7 @@ impl Command for List {
             }
         };
 
-        if utils::check_if_remote_link_is_added(&storage_folder_path).is_err() {
+        if utils::check_if_remote_link_is_added().is_err() {
             return Err(Error::SetRemoteRepository);
         }
 

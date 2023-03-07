@@ -27,8 +27,8 @@ pub struct Remove {
     name: String,
 }
 
-fn execute_git_commands(storage_folder_path: &Path, file_name: &str) -> Result<(), Error> {
-    if let Err(err) = git::ExecuterBuilder::new(storage_folder_path)
+fn execute_git_commands(git_storage_folder_path: &Path, file_name: &str) -> Result<(), Error> {
+    if let Err(err) = git::ExecuterBuilder::new(git_storage_folder_path)
         .run_commit(&format!("Remove {file_name}"))
         .build()
         .run()
@@ -43,12 +43,12 @@ impl Command for Remove {
     type Error = Error;
 
     fn execute(self) -> Result<String, Self::Error> {
-        let storage_folder_path = match utils::get_storage_folder_path() {
+        let git_storage_folder_path = match utils::get_git_storage_folder_path() {
             Ok(path) => path,
             Err(err) => return Err(Error::GetStorageFolderPath(err.to_string())),
         };
 
-        let storage_folder_path = match storage_folder_path.canonicalize() {
+        let storage_folder_path = match git_storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
                 return Err(Error::Unknown(
@@ -58,7 +58,7 @@ impl Command for Remove {
             }
         };
 
-        if utils::check_if_remote_link_is_added(&storage_folder_path).is_err() {
+        if utils::check_if_remote_link_is_added().is_err() {
             return Err(Error::SetRemoteRepository);
         }
 
@@ -72,6 +72,6 @@ impl Command for Remove {
 
         execute_git_commands(&storage_folder_path, &self.name)?;
 
-        Ok("Successfully removed the file".to_string())
+        Ok("Successfully removed the file and synchronized with the remote repository".to_string())
     }
 }

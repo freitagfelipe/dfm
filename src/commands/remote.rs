@@ -43,8 +43,8 @@ pub enum Subcommands {
     Set(Set),
 }
 
-fn execute_git_command(storage_folder_path: &Path, link: &str) -> Result<(), Error> {
-    if let Err(err) = git::ExecuterBuilder::new(storage_folder_path)
+fn execute_git_command(git_storage_folder_path: &Path, link: &str) -> Result<(), Error> {
+    if let Err(err) = git::ExecuterBuilder::new(git_storage_folder_path)
         .run_remote_add(link)
         .run_pull()
         .build()
@@ -56,7 +56,11 @@ fn execute_git_command(storage_folder_path: &Path, link: &str) -> Result<(), Err
     Ok(())
 }
 
-fn set_remote_link(storage_folder_path: &Path, link: &str) -> Result<String, Error> {
+fn set_remote_link(
+    storage_folder_path: &Path,
+    git_storage_folder_path: &Path,
+    link: &str,
+) -> Result<String, Error> {
     if storage_folder_path.join("remote.txt").exists() {
         return Err(Error::AlreadyAdded);
     }
@@ -70,9 +74,9 @@ fn set_remote_link(storage_folder_path: &Path, link: &str) -> Result<String, Err
         return Err(Error::Unknown(err.to_string(), "write to a file"));
     }
 
-    execute_git_command(storage_folder_path, link)?;
+    execute_git_command(git_storage_folder_path, link)?;
 
-    Ok("Successfully setted the origin".to_string())
+    Ok("Successfully setted the remote repository and synchronized".to_string())
 }
 
 fn show_remote_link(storage_folder_path: &Path) -> Result<String, Error> {
@@ -119,7 +123,11 @@ impl Command for Remote {
 
         match self.subcommands {
             Subcommands::Show => show_remote_link(&storage_folder_path),
-            Subcommands::Set(set) => set_remote_link(&storage_folder_path, &set.link),
+            Subcommands::Set(set) => set_remote_link(
+                &storage_folder_path,
+                &storage_folder_path.join("dotfiles"),
+                &set.link,
+            ),
         }
     }
 }

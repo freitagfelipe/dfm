@@ -1,7 +1,6 @@
 use crate::git;
 use crate::utils;
-use std::fs::{self, File};
-use std::io::Write;
+use std::fs;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use thiserror::Error;
@@ -39,26 +38,9 @@ fn check_if_git_is_installed() -> Result<(), Error> {
     Ok(())
 }
 
-pub fn create_git_ignore(storage_folder_path: &Path) -> Result<(), Error> {
-    let mut file = match File::create(storage_folder_path.join(".gitignore")) {
-        Ok(file) => file,
-        Err(err) => return Err(Error::Unknown(err.to_string(), "create a .gitignore file")),
-    };
-
-    if let Err(err) = file.write_all(b"remote.txt") {
-        return Err(Error::Unknown(
-            err.to_string(),
-            "write to the .gitignore file",
-        ));
-    };
-
-    Ok(())
-}
-
-pub fn execute_git_commands(storage_folder_path: &Path) -> Result<(), Error> {
-    if let Err(err) = git::ExecuterBuilder::new(storage_folder_path)
+pub fn execute_git_commands(git_storage_folder_path: &Path) -> Result<(), Error> {
+    if let Err(err) = git::ExecuterBuilder::new(git_storage_folder_path)
         .run_init()
-        .run_commit("Add .gitignore")
         .build()
         .run()
     {
@@ -71,20 +53,20 @@ pub fn execute_git_commands(storage_folder_path: &Path) -> Result<(), Error> {
 pub fn setup() -> Result<(), Error> {
     check_if_git_is_installed()?;
 
-    let storage_folder_path = match utils::get_storage_folder_path() {
+    let git_storage_folder_path = match utils::get_git_storage_folder_path() {
         Ok(path) => path,
         Err(err) => return Err(Error::GetStorageFolderPath(err.to_string())),
     };
 
-    if storage_folder_path.is_dir() {
+    if git_storage_folder_path.is_dir() {
         return Ok(());
     }
 
-    if let Err(err) = fs::create_dir_all(&storage_folder_path) {
+    if let Err(err) = fs::create_dir_all(&git_storage_folder_path) {
         return Err(Error::Unknown(err.to_string(), "create the storage folder"));
     }
 
-    let storage_folder_path = match storage_folder_path.canonicalize() {
+    let storage_folder_path = match git_storage_folder_path.canonicalize() {
         Ok(path) => path,
         Err(err) => {
             return Err(Error::Unknown(
@@ -93,8 +75,6 @@ pub fn setup() -> Result<(), Error> {
             ));
         }
     };
-
-    create_git_ignore(&storage_folder_path)?;
 
     execute_git_commands(&storage_folder_path)?;
 

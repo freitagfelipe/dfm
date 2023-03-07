@@ -25,12 +25,12 @@ impl Command for Reset {
     type Error = Error;
 
     fn execute(self) -> Result<String, Self::Error> {
-        let storage_folder_path = match utils::get_storage_folder_path() {
+        let git_storage_folder_path = match utils::get_git_storage_folder_path() {
             Ok(path) => path,
             Err(err) => return Err(Error::GetStorageFolderPath(err.to_string())),
         };
 
-        let storage_folder_path = match storage_folder_path.canonicalize() {
+        let git_storage_folder_path = match git_storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
                 return Err(Error::Unknown(
@@ -40,23 +40,19 @@ impl Command for Reset {
             }
         };
 
-        if utils::check_if_remote_link_is_added(&storage_folder_path).is_err() {
+        if utils::check_if_remote_link_is_added().is_err() {
             return Err(Error::SetRemoteRepository);
         }
 
-        if let Err(err) = fs::remove_dir_all(&storage_folder_path) {
+        if let Err(err) = fs::remove_dir_all(&git_storage_folder_path) {
             return Err(Error::Unknown(err.to_string(), "remove the storage folder"));
         }
 
-        if let Err(err) = fs::create_dir_all(&storage_folder_path) {
+        if let Err(err) = fs::create_dir_all(&git_storage_folder_path) {
             return Err(Error::Unknown(err.to_string(), "create the storage folder"));
         }
 
-        if let Err(err) = setup::create_git_ignore(&storage_folder_path) {
-            return Err(Error::SetupRelated(err.to_string()));
-        }
-
-        if let Err(err) = setup::execute_git_commands(&storage_folder_path) {
+        if let Err(err) = setup::execute_git_commands(&git_storage_folder_path) {
             return Err(Error::SetupRelated(err.to_string()));
         }
 

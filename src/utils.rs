@@ -17,7 +17,7 @@ pub fn get_storage_folder_path() -> Result<PathBuf, Error> {
             Err(err) => return Err(Error::CanNotGetEnviromentVariable("HOME", err.to_string())),
         };
 
-        Ok(PathBuf::from(format!("{home_path}/.config/dotfiles")))
+        Ok(PathBuf::from(format!("{home_path}/.config/DFM")))
     } else {
         let home_path = match env::var("APPDATA") {
             Ok(env) => env,
@@ -29,15 +29,21 @@ pub fn get_storage_folder_path() -> Result<PathBuf, Error> {
             }
         };
 
-        Ok(PathBuf::from(format!("{home_path}\\dotfiles")))
+        Ok(PathBuf::from(format!("{home_path}\\DFM")))
     }
+}
+
+pub fn get_git_storage_folder_path() -> Result<PathBuf, Error> {
+    Ok(get_storage_folder_path()?.join("dotfiles"))
 }
 
 pub fn check_if_file_exists(folder: &Path, file_name: &str) -> bool {
     folder.join(file_name).exists()
 }
 
-pub fn check_if_remote_link_is_added(storage_folder_path: &Path) -> Result<(), Error> {
+pub fn check_if_remote_link_is_added() -> Result<(), Error> {
+    let storage_folder_path = get_storage_folder_path()?;
+
     if !storage_folder_path.join("remote.txt").exists() {
         return Err(Error::SetRemoteRepository);
     }
