@@ -4,6 +4,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
+    #[error("You need to set a remote repository before use DFM")]
+    SetRemoteRepository,
     #[error("An error ocurred when trying to get the {0} enviroment variable: {1}")]
     CanNotGetEnviromentVariable(&'static str, String),
 }
@@ -33,4 +35,12 @@ pub fn get_storage_folder_path() -> Result<PathBuf, Error> {
 
 pub fn check_if_file_exists(folder: &Path, file_name: &str) -> bool {
     folder.join(file_name).exists()
+}
+
+pub fn check_if_remote_link_is_added(storage_folder_path: &Path) -> Result<(), Error> {
+    if !storage_folder_path.join("remote.txt").exists() {
+        return Err(Error::SetRemoteRepository);
+    }
+
+    Ok(())
 }

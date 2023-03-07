@@ -10,6 +10,8 @@ use walkdir::WalkDir;
 pub enum Error {
     #[error("{0}")]
     GetStorageFolderPath(String),
+    #[error("You need to set a remote repository before use DFM")]
+    SetRemoteRepository,
     #[error("Something wrong happened: {0}, when trying to: {1}")]
     Unknown(String, &'static str),
 }
@@ -36,6 +38,10 @@ impl Command for List {
                 ))
             }
         };
+
+        if utils::check_if_remote_link_is_added(&storage_folder_path).is_err() {
+            return Err(Error::SetRemoteRepository);
+        }
 
         let mut index = 1;
 
