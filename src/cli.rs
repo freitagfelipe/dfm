@@ -9,6 +9,7 @@ pub enum Commands {
     Remove(commands::Remove),
     Remote(commands::Remote),
     Reset(commands::Reset),
+    Clone(commands::Clone),
 }
 
 /// DFM - Dot File Manager
@@ -28,6 +29,7 @@ impl Commands {
             Self::Remove(cmd) => cmd.call(),
             Self::Remote(cmd) => cmd.call(),
             Self::Reset(cmd) => cmd.call(),
+            Self::Clone(cmd) => cmd.call(),
         }
     }
 }

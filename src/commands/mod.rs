@@ -1,4 +1,5 @@
 mod add;
+mod clone;
 mod list;
 mod remote;
 mod remove;
@@ -6,6 +7,7 @@ mod reset;
 mod update;
 
 pub use add::Add;
+pub use clone::Clone;
 use colored::Colorize;
 pub use list::List;
 pub use remote::Remote;
