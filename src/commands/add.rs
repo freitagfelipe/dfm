@@ -44,15 +44,40 @@ fn execute_git_commands(storage_folder_path: &Path, file_name: &str) -> Result<(
         return Err(Error::Unknown(err.to_string(), "wait git add . finish"));
     }
 
-    if let Err(err) = Cmd::new("git")
+    let mut handler = match Cmd::new("git")
         .args(["commit", "-m", &format!("Add {file_name}")])
         .current_dir(storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
     {
-        return Err(Error::Unknown(err.to_string(), "execute git commit"));
+        Ok(handler) => handler,
+        Err(err) => return Err(Error::Unknown(err.to_string(), "execute git commit")),
     };
+
+    if let Err(err) = handler.wait() {
+        return Err(Error::Unknown(err.to_string(), "wait git add . finish"));
+    }
+
+    let mut handler = match Cmd::new("git")
+        .args(["push", "origin", "main"])
+        .current_dir(storage_folder_path)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+    {
+        Ok(handler) => handler,
+        Err(err) => {
+            return Err(Error::Unknown(
+                err.to_string(),
+                "execute git push origin main",
+            ))
+        }
+    };
+
+    if let Err(err) = handler.wait() {
+        return Err(Error::Unknown(err.to_string(), "wait git push origin main"));
+    }
 
     Ok(())
 }
@@ -63,7 +88,7 @@ impl Command for Add {
     fn execute(self) -> Result<String, Self::Error> {
         let storage_folder_path = match utils::get_storage_folder_path() {
             Ok(path) => path,
-            Err(err) => return Err(Error::GetStorageFolderPath(err.to_string()))
+            Err(err) => return Err(Error::GetStorageFolderPath(err.to_string())),
         };
 
         let storage_folder_path = match storage_folder_path.canonicalize() {
