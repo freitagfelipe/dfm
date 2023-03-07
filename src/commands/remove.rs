@@ -11,7 +11,7 @@ pub enum Error {
     #[error("File does not exists in the repository")]
     FileDoesNotExists,
     #[error("{0}")]
-    GetStorageFolderPathError(String),
+    GetStorageFolderPath(String),
     #[error("Something wrong happened: {0}, when trying to: {1}")]
     Unknown(String, &'static str),
 }
@@ -58,7 +58,7 @@ impl Command for Remove {
     fn execute(self) -> Result<String, Self::Error> {
         let storage_folder_path = match utils::get_storage_folder_path() {
             Ok(path) => path,
-            Err(err) => return Err(Error::GetStorageFolderPathError(err.to_string()))
+            Err(err) => return Err(Error::GetStorageFolderPath(err.to_string()))
         };
 
         let storage_folder_path = match storage_folder_path.canonicalize() {
