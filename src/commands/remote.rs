@@ -40,17 +40,47 @@ pub enum Subcommands {
 }
 
 fn execute_git_command(storage_folder: &Path, link: &str) -> Result<(), Error> {
-    if let Err(err) = Cmd::new("git")
+    let mut handler = match Cmd::new("git")
         .args(["remote", "add", "origin", link])
         .current_dir(storage_folder)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
     {
+        Ok(handler) => handler,
+        Err(err) => {
+            return Err(Error::Unknown(
+                err.to_string(),
+                "execute git remote add origin",
+            ))
+        }
+    };
+
+    if let Err(err) = handler.wait() {
         return Err(Error::Unknown(
             err.to_string(),
-            "execute git remote add origin",
+            "wait git remote add origin",
         ));
+    }
+
+    let mut handler = match Cmd::new("git")
+        .args(["pull", "origin", "main"])
+        .current_dir(storage_folder)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+    {
+        Ok(handler) => handler,
+        Err(err) => {
+            return Err(Error::Unknown(
+                err.to_string(),
+                "execute git pull origin main",
+            ))
+        }
+    };
+
+    if let Err(err) = handler.wait() {
+        return Err(Error::Unknown(err.to_string(), "wait git pull origin main"));
     }
 
     Ok(())
