@@ -1,5 +1,5 @@
 use super::Command;
-use crate::utils::get_storage_folder_path;
+use crate::utils;
 use clap::Args;
 use colored::Colorize;
 use std::path::Path;
@@ -8,6 +8,8 @@ use walkdir::WalkDir;
 
 #[derive(Debug, Error)]
 pub enum Error {
+    #[error("{0}")]
+    GetStorageFolderPathError(String),
     #[error("Something wrong happened: {0}, when trying to: {1}")]
     Unknown(String, &'static str),
 }
@@ -20,7 +22,12 @@ impl Command for List {
     type Error = Error;
 
     fn execute(self) -> Result<String, Self::Error> {
-        let storage_folder_path = match get_storage_folder_path().canonicalize() {
+        let storage_folder_path = match utils::get_storage_folder_path() {
+            Ok(path) => path,
+            Err(err) => return Err(Error::GetStorageFolderPathError(err.to_string()))
+        };
+
+        let storage_folder_path = match storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
                 return Err(Error::Unknown(

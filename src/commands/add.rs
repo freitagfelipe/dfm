@@ -15,6 +15,8 @@ pub enum Error {
     FileDoesNotExists,
     #[error("You can just add files to the repository")]
     NotAFile,
+    #[error("{0}")]
+    GetStorageFolderPathError(String),
     #[error("Something wrong happened: {0}, when trying to: {1}")]
     Unknown(String, &'static str),
 }
@@ -59,7 +61,12 @@ impl Command for Add {
     type Error = Error;
 
     fn execute(self) -> Result<String, Self::Error> {
-        let storage_folder_path = match utils::get_storage_folder_path().canonicalize() {
+        let storage_folder_path = match utils::get_storage_folder_path() {
+            Ok(path) => path,
+            Err(err) => return Err(Error::GetStorageFolderPathError(err.to_string()))
+        };
+
+        let storage_folder_path = match storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
                 return Err(Error::Unknown(

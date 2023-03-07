@@ -1,5 +1,5 @@
 use super::Command;
-use crate::utils::{check_if_file_exists, get_storage_folder_path};
+use crate::utils;
 use clap::Args;
 use std::fs;
 use std::path::Path;
@@ -10,6 +10,8 @@ use thiserror::Error;
 pub enum Error {
     #[error("File does not exists in the repository")]
     FileDoesNotExists,
+    #[error("{0}")]
+    GetStorageFolderPathError(String),
     #[error("Something wrong happened: {0}, when trying to: {1}")]
     Unknown(String, &'static str),
 }
@@ -54,7 +56,12 @@ impl Command for Remove {
     type Error = Error;
 
     fn execute(self) -> Result<String, Self::Error> {
-        let storage_folder_path = match get_storage_folder_path().canonicalize() {
+        let storage_folder_path = match utils::get_storage_folder_path() {
+            Ok(path) => path,
+            Err(err) => return Err(Error::GetStorageFolderPathError(err.to_string()))
+        };
+
+        let storage_folder_path = match storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
                 return Err(Error::Unknown(
@@ -64,7 +71,7 @@ impl Command for Remove {
             }
         };
 
-        if !check_if_file_exists(&storage_folder_path, &self.name) {
+        if !utils::check_if_file_exists(&storage_folder_path, &self.name) {
             return Err(Error::FileDoesNotExists);
         }
 

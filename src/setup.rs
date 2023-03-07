@@ -1,4 +1,4 @@
-use crate::utils::get_storage_folder_path;
+use crate::utils;
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::Path;
@@ -9,6 +9,8 @@ use thiserror::Error;
 pub enum Error {
     #[error("You need to have git installed to use DFM")]
     NeedGit,
+    #[error("{0}")]
+    GetStorageFolderPathError(String),
     #[error("Something wrong happened: {0}, when trying to: {1}")]
     Unknown(String, &'static str),
 }
@@ -104,17 +106,17 @@ pub fn execute_git_commands(storage_folder_path: &Path) -> Result<(), Error> {
 pub fn setup() -> Result<(), Error> {
     check_if_git_is_installed()?;
 
-    let storage_folder_path = get_storage_folder_path();
+    let storage_folder_path = match utils::get_storage_folder_path() {
+        Ok(path) => path,
+        Err(err) => return Err(Error::GetStorageFolderPathError(err.to_string()))
+    };
 
     if storage_folder_path.is_dir() {
         return Ok(());
     }
 
     if let Err(err) = fs::create_dir_all(&storage_folder_path) {
-        return Err(Error::Unknown(
-            err.to_string(),
-            "create the storage folder",
-        ));
+        return Err(Error::Unknown(err.to_string(), "create the storage folder"));
     }
 
     let storage_folder_path = match storage_folder_path.canonicalize() {

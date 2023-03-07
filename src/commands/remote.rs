@@ -1,5 +1,5 @@
 use super::Command;
-use crate::utils::get_storage_folder_path;
+use crate::utils;
 use clap::{Args, Subcommand};
 use std::fs::File;
 use std::io::{Read, Write};
@@ -13,6 +13,8 @@ pub enum Error {
     AlreadyAdded,
     #[error("Remote repository not setted yet")]
     NotSetted,
+    #[error("{0}")]
+    GetStorageFolderPathError(String),
     #[error("Something wrong happened: {0}, when trying to: {1}")]
     Unknown(String, &'static str),
 }
@@ -87,7 +89,7 @@ fn execute_git_command(storage_folder_path: &Path, link: &str) -> Result<(), Err
 }
 
 fn set_remote_link(storage_folder_path: &Path, link: &str) -> Result<String, Error> {
-    if get_storage_folder_path().join("remote.txt").exists() {
+    if storage_folder_path.join("remote.txt").exists() {
         return Err(Error::AlreadyAdded);
     }
 
@@ -132,7 +134,12 @@ impl Command for Remote {
     type Error = Error;
 
     fn execute(self) -> Result<String, Self::Error> {
-        let storage_folder_path = match get_storage_folder_path().canonicalize() {
+        let storage_folder_path = match utils::get_storage_folder_path() {
+            Ok(path) => path,
+            Err(err) => return Err(Error::GetStorageFolderPathError(err.to_string()))
+        };
+
+        let storage_folder_path = match storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
                 return Err(Error::Unknown(
