@@ -1,3 +1,4 @@
+use crate::git;
 use crate::utils;
 use std::fs::{self, File};
 use std::io::Write;
@@ -11,6 +12,8 @@ pub enum Error {
     NeedGit,
     #[error("{0}")]
     GetStorageFolderPath(String),
+    #[error("{0}")]
+    GitCommand(String),
     #[error("Something wrong happened: {0}, when trying to: {1}")]
     Unknown(String, &'static str),
 }
@@ -53,47 +56,27 @@ pub fn create_git_ignore(storage_folder_path: &Path) -> Result<(), Error> {
 }
 
 pub fn execute_git_commands(storage_folder_path: &Path) -> Result<(), Error> {
-    let mut handler = match Command::new("git")
-        .arg("init")
-        .current_dir(storage_folder_path)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-    {
+    let mut handler = match git::init(storage_folder_path) {
         Ok(handler) => handler,
-        Err(err) => {
-            return Err(Error::Unknown(err.to_string(), "execute git init"));
-        }
+        Err(err) => return Err(Error::GitCommand(err.to_string())),
     };
 
     if let Err(err) = handler.wait() {
         return Err(Error::Unknown(err.to_string(), "wait git init finish"));
     }
 
-    handler = match Command::new("git")
-        .args(["add", "."])
-        .current_dir(storage_folder_path)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-    {
+    let mut handler = match git::add_all(storage_folder_path) {
         Ok(handler) => handler,
-        Err(err) => return Err(Error::Unknown(err.to_string(), "execute git add")),
+        Err(err) => return Err(Error::GitCommand(err.to_string())),
     };
 
     if let Err(err) = handler.wait() {
         return Err(Error::Unknown(err.to_string(), "wait git add finish"));
     }
 
-    handler = match Command::new("git")
-        .args(["commit", "-m", "Add .gitignore"])
-        .current_dir(storage_folder_path)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-    {
+    let mut handler = match git::commit(storage_folder_path, "Add .gitignore") {
         Ok(handler) => handler,
-        Err(err) => return Err(Error::Unknown(err.to_string(), "execute git commit")),
+        Err(err) => return Err(Error::GitCommand(err.to_string())),
     };
 
     if let Err(err) = handler.wait() {

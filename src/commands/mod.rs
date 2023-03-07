@@ -1,6 +1,5 @@
 mod add;
 mod list;
-mod push;
 mod remote;
 mod remove;
 mod reset;
@@ -9,7 +8,6 @@ mod update;
 pub use add::Add;
 use colored::Colorize;
 pub use list::List;
-pub use push::Push;
 pub use remote::Remote;
 pub use remove::Remove;
 pub use reset::Reset;

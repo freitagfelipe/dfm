@@ -1,10 +1,10 @@
 use super::Command;
+use crate::git;
 use crate::utils;
 use clap::Args;
 use std::env;
 use std::fs;
 use std::path::Path;
-use std::process::{Command as Cmd, Stdio};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -17,6 +17,8 @@ pub enum Error {
     NotAFile,
     #[error("{0}")]
     GetStorageFolderPath(String),
+    #[error("{0}")]
+    GitCommand(String),
     #[error("Something wrong happened: {0}, when trying to: {1}")]
     Unknown(String, &'static str),
 }
@@ -29,50 +31,27 @@ pub struct Add {
 }
 
 fn execute_git_commands(storage_folder_path: &Path, file_name: &str) -> Result<(), Error> {
-    let mut handler = match Cmd::new("git")
-        .args(["add", "."])
-        .current_dir(storage_folder_path)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-    {
+    let mut handler = match git::add_all(storage_folder_path) {
         Ok(handler) => handler,
-        Err(err) => return Err(Error::Unknown(err.to_string(), "execute git add .")),
+        Err(err) => return Err(Error::GitCommand(err.to_string())),
     };
 
     if let Err(err) = handler.wait() {
         return Err(Error::Unknown(err.to_string(), "wait git add . finish"));
     }
 
-    let mut handler = match Cmd::new("git")
-        .args(["commit", "-m", &format!("Add {file_name}")])
-        .current_dir(storage_folder_path)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-    {
+    let mut handler = match git::commit(storage_folder_path, &format!("Add {file_name}")) {
         Ok(handler) => handler,
-        Err(err) => return Err(Error::Unknown(err.to_string(), "execute git commit")),
+        Err(err) => return Err(Error::GitCommand(err.to_string())),
     };
 
     if let Err(err) = handler.wait() {
         return Err(Error::Unknown(err.to_string(), "wait git add . finish"));
     }
 
-    let mut handler = match Cmd::new("git")
-        .args(["push", "origin", "main"])
-        .current_dir(storage_folder_path)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-    {
+    let mut handler = match git::push(storage_folder_path) {
         Ok(handler) => handler,
-        Err(err) => {
-            return Err(Error::Unknown(
-                err.to_string(),
-                "execute git push origin main",
-            ))
-        }
+        Err(err) => return Err(Error::GitCommand(err.to_string())),
     };
 
     if let Err(err) = handler.wait() {

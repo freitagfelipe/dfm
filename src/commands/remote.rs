@@ -1,10 +1,10 @@
 use super::Command;
+use crate::git;
 use crate::utils;
 use clap::{Args, Subcommand};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
-use std::process::{Command as Cmd, Stdio};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -15,6 +15,8 @@ pub enum Error {
     NotSetted,
     #[error("{0}")]
     GetStorageFolderPath(String),
+    #[error("{0}")]
+    GitCommand(String),
     #[error("Something wrong happened: {0}, when trying to: {1}")]
     Unknown(String, &'static str),
 }
@@ -42,20 +44,9 @@ pub enum Subcommands {
 }
 
 fn execute_git_command(storage_folder_path: &Path, link: &str) -> Result<(), Error> {
-    let mut handler = match Cmd::new("git")
-        .args(["remote", "add", "origin", link])
-        .current_dir(storage_folder_path)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-    {
+    let mut handler = match git::remote_add(storage_folder_path, link) {
         Ok(handler) => handler,
-        Err(err) => {
-            return Err(Error::Unknown(
-                err.to_string(),
-                "execute git remote add origin",
-            ))
-        }
+        Err(err) => return Err(Error::GitCommand(err.to_string())),
     };
 
     if let Err(err) = handler.wait() {
@@ -65,20 +56,9 @@ fn execute_git_command(storage_folder_path: &Path, link: &str) -> Result<(), Err
         ));
     }
 
-    let mut handler = match Cmd::new("git")
-        .args(["pull", "origin", "main"])
-        .current_dir(storage_folder_path)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-    {
+    let mut handler = match git::pull(storage_folder_path) {
         Ok(handler) => handler,
-        Err(err) => {
-            return Err(Error::Unknown(
-                err.to_string(),
-                "execute git pull origin main",
-            ))
-        }
+        Err(err) => return Err(Error::GitCommand(err.to_string())),
     };
 
     if let Err(err) = handler.wait() {
