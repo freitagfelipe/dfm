@@ -34,7 +34,7 @@ fn check_if_git_is_installed() -> Result<(), Error> {
     Ok(())
 }
 
-fn create_git_ignore(storage_folder_path: &Path) -> Result<(), Error> {
+pub fn create_git_ignore(storage_folder_path: &Path) -> Result<(), Error> {
     let mut file = match File::create(storage_folder_path.join(".gitignore")) {
         Ok(file) => file,
         Err(err) => return Err(Error::Unknown(err.to_string(), "create a .gitignore file")),
@@ -50,7 +50,7 @@ fn create_git_ignore(storage_folder_path: &Path) -> Result<(), Error> {
     Ok(())
 }
 
-fn execute_git_commands(storage_folder_path: &Path) -> Result<(), Error> {
+pub fn execute_git_commands(storage_folder_path: &Path) -> Result<(), Error> {
     let mut handler = match Command::new("git")
         .arg("init")
         .current_dir(storage_folder_path)
@@ -113,7 +113,7 @@ pub fn setup() -> Result<(), Error> {
     if let Err(err) = fs::create_dir_all(&storage_folder_path) {
         return Err(Error::Unknown(
             err.to_string(),
-            "create the storage directory",
+            "create the storage folder",
         ));
     }
 
@@ -122,7 +122,7 @@ pub fn setup() -> Result<(), Error> {
         Err(err) => {
             return Err(Error::Unknown(
                 err.to_string(),
-                "canonicalize the storage path",
+                "canonicalize the storage folder path",
             ));
         }
     };
