@@ -108,7 +108,7 @@ pub fn setup() -> Result<(), Error> {
 
     let storage_folder_path = match utils::get_storage_folder_path() {
         Ok(path) => path,
-        Err(err) => return Err(Error::GetStorageFolderPath(err.to_string()))
+        Err(err) => return Err(Error::GetStorageFolderPath(err.to_string())),
     };
 
     if storage_folder_path.is_dir() {
