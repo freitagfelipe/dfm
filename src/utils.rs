@@ -1,33 +1,33 @@
-use colored::Colorize;
 use std::env;
 use std::path::{Path, PathBuf};
-use std::process;
+use thiserror::Error;
 
-pub fn get_storage_folder_path() -> PathBuf {
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("An error ocurred when trying to get the {0} enviroment variable: {1}")]
+    CanNotGetEnviromentVariable(&'static str, String),
+}
+
+pub fn get_storage_folder_path() -> Result<PathBuf, Error> {
     if cfg!(any(target_os = "linux", target_os = "macos")) {
-        let home_path = env::var("HOME").unwrap_or_else(|err| {
-            let err_message = format!(
-                "The following error ocurred while trying to get the HOME enviroment variable: {err}"
-            );
+        let home_path = match env::var("HOME") {
+            Ok(env) => env,
+            Err(err) => return Err(Error::CanNotGetEnviromentVariable("HOME", err.to_string())),
+        };
 
-            eprintln!("{}", err_message.red());
-
-            process::exit(2);
-        });
-
-        PathBuf::from(format!("{home_path}/.config/dotfiles"))
+        Ok(PathBuf::from(format!("{home_path}/.config/dotfiles")))
     } else {
-        let home_path = env::var("APPDATA").unwrap_or_else(|err| {
-            let err_message = format!(
-                "The following error ocurred while trying to get the APPDATA enviroment variable: {err}"
-            );
+        let home_path = match env::var("APPDATA") {
+            Ok(env) => env,
+            Err(err) => {
+                return Err(Error::CanNotGetEnviromentVariable(
+                    "APPDATA",
+                    err.to_string(),
+                ))
+            }
+        };
 
-            eprintln!("{}", err_message.red());
-
-            process::exit(2);
-        });
-
-        PathBuf::from(format!("{home_path}\\dotfiles"))
+        Ok(PathBuf::from(format!("{home_path}\\dotfiles")))
     }
 }
 
