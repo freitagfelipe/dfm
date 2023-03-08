@@ -1,4 +1,5 @@
 use super::Command;
+use crate::git::ExecuterBuilder;
 use crate::utils;
 use clap::Args;
 use colored::Colorize;
@@ -14,6 +15,8 @@ pub enum Error {
     GetStorageFolderPath(String),
     #[error("You need to set a remote repository before use DFM")]
     SetRemoteRepository,
+    #[error("{0}")]
+    GitCommand(String),
     #[error("Something wrong happened: {0}, when trying to: {1}")]
     Unknown(String, &'static str),
 }
@@ -40,6 +43,14 @@ impl Command for List {
                 ))
             }
         };
+
+        if let Err(err) = ExecuterBuilder::new(&git_storage_folder_path)
+            .run_pull()
+            .build()
+            .run()
+        {
+            return Err(Error::GitCommand(err.to_string()));
+        }
 
         if utils::check_if_remote_link_is_added().is_err() {
             return Err(Error::SetRemoteRepository);

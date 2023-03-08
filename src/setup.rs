@@ -1,4 +1,4 @@
-use crate::git;
+use crate::git::ExecuterBuilder;
 use crate::utils;
 use std::fs;
 use std::path::Path;
@@ -39,7 +39,7 @@ fn check_if_git_is_installed() -> Result<(), Error> {
 }
 
 pub fn execute_git_commands(git_storage_folder_path: &Path) -> Result<(), Error> {
-    if let Err(err) = git::ExecuterBuilder::new(git_storage_folder_path)
+    if let Err(err) = ExecuterBuilder::new(git_storage_folder_path)
         .run_init()
         .build()
         .run()

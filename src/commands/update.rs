@@ -1,5 +1,6 @@
 use super::Command;
-use crate::{git, utils};
+use crate::git::ExecuterBuilder;
+use crate::utils;
 use clap::Args;
 use std::env;
 use std::fs::{self, File};
@@ -33,7 +34,7 @@ pub struct Update {
 }
 
 fn execute_git_commands(git_storage_folder_path: &Path, file_name: &str) -> Result<(), Error> {
-    if let Err(err) = git::ExecuterBuilder::new(git_storage_folder_path)
+    if let Err(err) = ExecuterBuilder::new(git_storage_folder_path)
         .run_commit(&format!("Update {file_name}"))
         .build()
         .run()

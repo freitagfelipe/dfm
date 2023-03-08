@@ -120,7 +120,7 @@ impl<'a> ExecuterBuilder<'a> {
     }
 }
 
-pub fn init(git_storage_folder_path: &Path) -> Result<Child, Error> {
+fn init(git_storage_folder_path: &Path) -> Result<Child, Error> {
     let handler = match Command::new("git")
         .arg("init")
         .current_dir(git_storage_folder_path)
@@ -137,7 +137,7 @@ pub fn init(git_storage_folder_path: &Path) -> Result<Child, Error> {
     Ok(handler)
 }
 
-pub fn add_all(git_storage_folder_path: &Path) -> Result<Child, Error> {
+fn add_all(git_storage_folder_path: &Path) -> Result<Child, Error> {
     let handler = match Command::new("git")
         .args(["add", "."])
         .current_dir(git_storage_folder_path)
@@ -152,7 +152,7 @@ pub fn add_all(git_storage_folder_path: &Path) -> Result<Child, Error> {
     Ok(handler)
 }
 
-pub fn commit(git_storage_folder_path: &Path, commit_name: &str) -> Result<Child, Error> {
+fn commit(git_storage_folder_path: &Path, commit_name: &str) -> Result<Child, Error> {
     let handler = match Command::new("git")
         .args(["commit", "-m", commit_name])
         .current_dir(git_storage_folder_path)
@@ -167,7 +167,7 @@ pub fn commit(git_storage_folder_path: &Path, commit_name: &str) -> Result<Child
     Ok(handler)
 }
 
-pub fn push(git_storage_folder_path: &Path) -> Result<Child, Error> {
+fn push(git_storage_folder_path: &Path) -> Result<Child, Error> {
     let handler = match Command::new("git")
         .args(["push", "origin", "main"])
         .current_dir(git_storage_folder_path)
@@ -187,7 +187,7 @@ pub fn push(git_storage_folder_path: &Path) -> Result<Child, Error> {
     Ok(handler)
 }
 
-pub fn remote_add(git_storage_folder_path: &Path, link: &str) -> Result<Child, Error> {
+fn remote_add(git_storage_folder_path: &Path, link: &str) -> Result<Child, Error> {
     let handler = match Command::new("git")
         .args(["remote", "add", "origin", link])
         .current_dir(git_storage_folder_path)
@@ -207,7 +207,7 @@ pub fn remote_add(git_storage_folder_path: &Path, link: &str) -> Result<Child, E
     Ok(handler)
 }
 
-pub fn pull(git_storage_folder_path: &Path) -> Result<Child, Error> {
+fn pull(git_storage_folder_path: &Path) -> Result<Child, Error> {
     let handler = match Command::new("git")
         .args(["pull", "origin", "main"])
         .current_dir(git_storage_folder_path)

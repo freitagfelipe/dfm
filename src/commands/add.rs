@@ -1,5 +1,5 @@
 use super::Command;
-use crate::git;
+use crate::git::ExecuterBuilder;
 use crate::utils;
 use clap::Args;
 use std::env;
@@ -33,7 +33,7 @@ pub struct Add {
 }
 
 fn execute_git_commands(git_storage_folder_path: &Path, file_name: &str) -> Result<(), Error> {
-    if let Err(err) = git::ExecuterBuilder::new(git_storage_folder_path)
+    if let Err(err) = ExecuterBuilder::new(git_storage_folder_path)
         .run_commit(&format!("Add {file_name}"))
         .build()
         .run()

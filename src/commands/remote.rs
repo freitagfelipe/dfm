@@ -1,5 +1,5 @@
 use super::Command;
-use crate::git;
+use crate::git::ExecuterBuilder;
 use crate::utils;
 use clap::{Args, Subcommand};
 use std::fs::File;
@@ -9,7 +9,9 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("Remote repository already added if you want to change that you need to reset your DFM")]
+    #[error(
+        "Remote repository already added if you want to change that you need to reset your DFM"
+    )]
     AlreadyAdded,
     #[error("Remote repository not setted yet")]
     NotSetted,
@@ -44,7 +46,7 @@ pub enum Subcommands {
 }
 
 fn execute_git_command(git_storage_folder_path: &Path, link: &str) -> Result<(), Error> {
-    if let Err(err) = git::ExecuterBuilder::new(git_storage_folder_path)
+    if let Err(err) = ExecuterBuilder::new(git_storage_folder_path)
         .run_remote_add(link)
         .run_pull()
         .build()
