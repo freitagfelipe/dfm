@@ -2,6 +2,12 @@
 name = "dfm"
 version = "0.1.0"
 edition = "2021"
+authors = ["Felipe Rodrigues de Santana Freitag"]
+repository = "https://github.com/freitagfelipe/dfm"
+license = "MIT"
+readme = "README.md"
+description = "A simple and easy-to-use dotfile manager"
+categories = ["command-line-utilities"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
