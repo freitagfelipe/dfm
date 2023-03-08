@@ -65,22 +65,14 @@ $ dfm clone <file-name>
 $ dfm --version
 ```
 
-## How to install with Linux package manager
+## How to install
 
-- ...
-
-## How to install with cargo
-
-- ...
-
-## How to manually install
-
-- ...
+- You can install DFM on your computer with cargo just typing ```cargo install dfm```. If you do not have cargo in your computer you can just follow this Rust [installation guide](https://www.rust-lang.org/tools/install).
 
 ## Troubleshooting
 
-- If after the installation you can not execute DFM correctly you can just open an issue and I will try to help.
+- If after the installation you can not execute DFM correctly in your terminal you can just open an issue and I will try to help.
 
 ## Uninstalling DFM
 
-- ...
+- Just type ```cargo uninstall dfm```.
