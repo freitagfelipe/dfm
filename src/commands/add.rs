@@ -1,6 +1,6 @@
 use super::Command;
 use crate::git::ExecuterBuilder;
-use crate::utils;
+use crate::utils::{self, CommonError};
 use clap::Args;
 use std::env;
 use std::fs;
@@ -16,13 +16,7 @@ pub enum Error {
     #[error("You can just add files to the repository")]
     NotAFile,
     #[error("{0}")]
-    GetStorageFolderPath(String),
-    #[error("{0}")]
-    GitCommand(String),
-    #[error("You need to set a remote repository before use DFM")]
-    SetRemoteRepository,
-    #[error("Something wrong happened: {0}, when trying to: {1}")]
-    Unknown(String, &'static str),
+    Common(CommonError),
 }
 
 /// Adds a file to the remote repository
@@ -38,7 +32,7 @@ fn execute_git_commands(git_storage_folder_path: &Path, file_name: &str) -> Resu
         .build()
         .run()
     {
-        return Err(Error::GitCommand(err.to_string()));
+        return Err(Error::Common(CommonError::GitCommand(err.to_string())));
     }
 
     Ok(())
@@ -50,27 +44,34 @@ impl Command for Add {
     fn execute(self) -> Result<String, Self::Error> {
         let git_storage_folder_path = match utils::get_git_storage_folder_path() {
             Ok(path) => path,
-            Err(err) => return Err(Error::GetStorageFolderPath(err.to_string())),
+            Err(err) => {
+                return Err(Error::Common(CommonError::GetStorageFolderPath(
+                    err.to_string(),
+                )))
+            }
         };
 
         let git_storage_folder_path = match git_storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Unknown(
+                return Err(Error::Common(CommonError::Unknown(
                     err.to_string(),
                     "canonicalize the storage folder path",
-                ))
+                )))
             }
         };
 
         if utils::check_if_remote_link_is_added().is_err() {
-            return Err(Error::SetRemoteRepository);
+            return Err(Error::Common(CommonError::SetRemoteRepository));
         }
 
         let current_dir = match env::current_dir() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Unknown(err.to_string(), "get the current dir"));
+                return Err(Error::Common(CommonError::Unknown(
+                    err.to_string(),
+                    "get the current dir",
+                )));
             }
         };
 
@@ -90,7 +91,10 @@ impl Command for Add {
             current_dir.join(&self.name),
             git_storage_folder_path.join(&self.name),
         ) {
-            return Err(Error::Unknown(err.to_string(), "copy the file"));
+            return Err(Error::Common(CommonError::Unknown(
+                err.to_string(),
+                "copy the file",
+            )));
         }
 
         execute_git_commands(&git_storage_folder_path, &self.name)?;

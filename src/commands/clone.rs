@@ -1,5 +1,5 @@
 use super::Command;
-use crate::utils;
+use crate::utils::{self, CommonError};
 use clap::Args;
 use std::{env, fs};
 use thiserror::Error;
@@ -9,9 +9,7 @@ pub enum Error {
     #[error("File does not exist in the repository")]
     FileDoesNotExists,
     #[error("{0}")]
-    GetStorageFolderPath(String),
-    #[error("You need to set a remote repository before use DFM")]
-    Unknown(String, &'static str),
+    Common(CommonError),
 }
 
 /// Clones a file from the repository to your current directory
@@ -27,16 +25,20 @@ impl Command for Clone {
     fn execute(self) -> Result<String, Self::Error> {
         let storage_folder_path = match utils::get_storage_folder_path() {
             Ok(path) => path,
-            Err(err) => return Err(Error::GetStorageFolderPath(err.to_string())),
+            Err(err) => {
+                return Err(Error::Common(CommonError::GetStorageFolderPath(
+                    err.to_string(),
+                )))
+            }
         };
 
         let storage_folder_path = match storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Unknown(
+                return Err(Error::Common(CommonError::Unknown(
                     err.to_string(),
                     "canonicalize the storage folder path",
-                ))
+                )))
             }
         };
 
@@ -47,7 +49,10 @@ impl Command for Clone {
         let current_dir = match env::current_dir() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Unknown(err.to_string(), "get the current dir"));
+                return Err(Error::Common(CommonError::Unknown(
+                    err.to_string(),
+                    "get the current dir",
+                )));
             }
         };
 
@@ -55,7 +60,10 @@ impl Command for Clone {
             storage_folder_path.join(&self.name),
             current_dir.join(&self.name),
         ) {
-            return Err(Error::Unknown(err.to_string(), "copy the file"));
+            return Err(Error::Common(CommonError::Unknown(
+                err.to_string(),
+                "copy the file",
+            )));
         }
 
         Ok("Successfully cloned the file to your current directory".to_string())

@@ -1,6 +1,6 @@
 use super::Command;
 use crate::git::ExecuterBuilder;
-use crate::utils;
+use crate::utils::{self, CommonError};
 use clap::{Args, Subcommand};
 use regex::Regex;
 use std::fs::File;
@@ -19,11 +19,7 @@ pub enum Error {
     #[error("Not a ssh link")]
     NotSSH,
     #[error("{0}")]
-    GetStorageFolderPath(String),
-    #[error("{0}")]
-    GitCommand(String),
-    #[error("Something wrong happened: {0}, when trying to: {1}")]
-    Unknown(String, &'static str),
+    Common(CommonError),
 }
 
 /// Manages the remote repository
@@ -55,7 +51,7 @@ fn execute_git_command(git_storage_folder_path: &Path, link: &str) -> Result<(),
         .build()
         .run()
     {
-        return Err(Error::GitCommand(err.to_string()));
+        return Err(Error::Common(CommonError::GitCommand(err.to_string())));
     }
 
     Ok(())
@@ -72,7 +68,12 @@ fn set_remote_link(
 
     let regex = match Regex::new(r"git@git((hub)|(lab))\.com:\S*/\S*\.git") {
         Ok(regex) => regex,
-        Err(err) => return Err(Error::Unknown(err.to_string(), "create the ssh regex")),
+        Err(err) => {
+            return Err(Error::Common(CommonError::Unknown(
+                err.to_string(),
+                "create the ssh regex",
+            )))
+        }
     };
 
     println!("{}", regex.as_str());
@@ -83,11 +84,19 @@ fn set_remote_link(
 
     let mut file = match File::create(storage_folder_path.join("remote.txt")) {
         Ok(file) => file,
-        Err(err) => return Err(Error::Unknown(err.to_string(), "create a file")),
+        Err(err) => {
+            return Err(Error::Common(CommonError::Unknown(
+                err.to_string(),
+                "create a file",
+            )))
+        }
     };
 
     if let Err(err) = file.write_all(link.as_bytes()) {
-        return Err(Error::Unknown(err.to_string(), "write to a file"));
+        return Err(Error::Common(CommonError::Unknown(
+            err.to_string(),
+            "write to a file",
+        )));
     }
 
     execute_git_command(git_storage_folder_path, link)?;
@@ -102,17 +111,25 @@ fn show_remote_link(storage_folder_path: &Path) -> Result<String, Error> {
 
     let mut file = match File::open(storage_folder_path.join("remote.txt")) {
         Ok(file) => file,
-        Err(err) => return Err(Error::Unknown(err.to_string(), "open a file")),
+        Err(err) => {
+            return Err(Error::Common(CommonError::Unknown(
+                err.to_string(),
+                "open a file",
+            )))
+        }
     };
 
     let mut content = Vec::new();
 
     if let Err(err) = file.read_to_end(&mut content) {
-        return Err(Error::Unknown(err.to_string(), "read a file"));
+        return Err(Error::Common(CommonError::Unknown(
+            err.to_string(),
+            "read a file",
+        )));
     }
 
     let Ok(content) = String::from_utf8(content) else {
-        return Err(Error::Unknown("Invalid UTF-8".to_string(), "convert vec<u8> to String"));
+        return Err(Error::Common(CommonError::Unknown("Invalid UTF-8".to_string(), "convert vec<u8> to String")));
     };
 
     Ok(content)
@@ -124,16 +141,20 @@ impl Command for Remote {
     fn execute(self) -> Result<String, Self::Error> {
         let storage_folder_path = match utils::get_storage_folder_path() {
             Ok(path) => path,
-            Err(err) => return Err(Error::GetStorageFolderPath(err.to_string())),
+            Err(err) => {
+                return Err(Error::Common(CommonError::GetStorageFolderPath(
+                    err.to_string(),
+                )))
+            }
         };
 
         let storage_folder_path = match storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Unknown(
+                return Err(Error::Common(CommonError::Unknown(
                     err.to_string(),
                     "canonicalize the storage folder path",
-                ))
+                )))
             }
         };
 

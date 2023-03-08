@@ -1,12 +1,6 @@
+use crate::utils::CommonError;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error("Something wrong happened: {0}, when trying to: {1}")]
-    Unknown(String, &'static str),
-}
 
 pub struct Executer<'a> {
     git_storage_folder_path: &'a Path,
@@ -19,22 +13,22 @@ pub struct Executer<'a> {
 }
 
 impl Executer<'_> {
-    pub fn run(self) -> Result<(), Error> {
+    pub fn run(self) -> Result<(), CommonError> {
         if self.run_init {
             if let Err(err) = init(self.git_storage_folder_path)?.wait() {
-                return Err(Error::Unknown(err.to_string(), "wait git init"));
+                return Err(CommonError::Unknown(err.to_string(), "wait git init"));
             }
         }
 
         if self.run_remote_add {
             if let Err(err) = remote_add(self.git_storage_folder_path, &self.remote_link)?.wait() {
-                return Err(Error::Unknown(err.to_string(), "wait git remote add"));
+                return Err(CommonError::Unknown(err.to_string(), "wait git remote add"));
             }
         }
 
         if self.run_pull || self.run_commit {
             if let Err(err) = pull(self.git_storage_folder_path)?.wait() {
-                return Err(Error::Unknown(err.to_string(), "wait git pull"));
+                return Err(CommonError::Unknown(err.to_string(), "wait git pull"));
             }
         }
 
@@ -43,15 +37,15 @@ impl Executer<'_> {
         }
 
         if let Err(err) = add_all(self.git_storage_folder_path)?.wait() {
-            return Err(Error::Unknown(err.to_string(), "wait git add"));
+            return Err(CommonError::Unknown(err.to_string(), "wait git add"));
         }
 
         if let Err(err) = commit(self.git_storage_folder_path, &self.commit_message)?.wait() {
-            return Err(Error::Unknown(err.to_string(), "wait git commit"));
+            return Err(CommonError::Unknown(err.to_string(), "wait git commit"));
         }
 
         if let Err(err) = push(self.git_storage_folder_path)?.wait() {
-            return Err(Error::Unknown(err.to_string(), "wait git push"));
+            return Err(CommonError::Unknown(err.to_string(), "wait git push"));
         }
 
         Ok(())
@@ -120,7 +114,7 @@ impl<'a> ExecuterBuilder<'a> {
     }
 }
 
-fn init(git_storage_folder_path: &Path) -> Result<Child, Error> {
+fn init(git_storage_folder_path: &Path) -> Result<Child, CommonError> {
     let handler = match Command::new("git")
         .arg("init")
         .current_dir(git_storage_folder_path)
@@ -130,14 +124,14 @@ fn init(git_storage_folder_path: &Path) -> Result<Child, Error> {
     {
         Ok(handler) => handler,
         Err(err) => {
-            return Err(Error::Unknown(err.to_string(), "execute git init"));
+            return Err(CommonError::Unknown(err.to_string(), "execute git init"));
         }
     };
 
     Ok(handler)
 }
 
-fn add_all(git_storage_folder_path: &Path) -> Result<Child, Error> {
+fn add_all(git_storage_folder_path: &Path) -> Result<Child, CommonError> {
     let handler = match Command::new("git")
         .args(["add", "."])
         .current_dir(git_storage_folder_path)
@@ -146,13 +140,13 @@ fn add_all(git_storage_folder_path: &Path) -> Result<Child, Error> {
         .spawn()
     {
         Ok(handler) => handler,
-        Err(err) => return Err(Error::Unknown(err.to_string(), "execute git add .")),
+        Err(err) => return Err(CommonError::Unknown(err.to_string(), "execute git add .")),
     };
 
     Ok(handler)
 }
 
-fn commit(git_storage_folder_path: &Path, commit_name: &str) -> Result<Child, Error> {
+fn commit(git_storage_folder_path: &Path, commit_name: &str) -> Result<Child, CommonError> {
     let handler = match Command::new("git")
         .args(["commit", "-m", commit_name])
         .current_dir(git_storage_folder_path)
@@ -161,13 +155,13 @@ fn commit(git_storage_folder_path: &Path, commit_name: &str) -> Result<Child, Er
         .spawn()
     {
         Ok(handler) => handler,
-        Err(err) => return Err(Error::Unknown(err.to_string(), "execute git commit")),
+        Err(err) => return Err(CommonError::Unknown(err.to_string(), "execute git commit")),
     };
 
     Ok(handler)
 }
 
-fn push(git_storage_folder_path: &Path) -> Result<Child, Error> {
+fn push(git_storage_folder_path: &Path) -> Result<Child, CommonError> {
     let handler = match Command::new("git")
         .args(["push", "origin", "main"])
         .current_dir(git_storage_folder_path)
@@ -177,7 +171,7 @@ fn push(git_storage_folder_path: &Path) -> Result<Child, Error> {
     {
         Ok(handler) => handler,
         Err(err) => {
-            return Err(Error::Unknown(
+            return Err(CommonError::Unknown(
                 err.to_string(),
                 "execute git push origin main",
             ))
@@ -187,7 +181,7 @@ fn push(git_storage_folder_path: &Path) -> Result<Child, Error> {
     Ok(handler)
 }
 
-fn remote_add(git_storage_folder_path: &Path, link: &str) -> Result<Child, Error> {
+fn remote_add(git_storage_folder_path: &Path, link: &str) -> Result<Child, CommonError> {
     let handler = match Command::new("git")
         .args(["remote", "add", "origin", link])
         .current_dir(git_storage_folder_path)
@@ -197,7 +191,7 @@ fn remote_add(git_storage_folder_path: &Path, link: &str) -> Result<Child, Error
     {
         Ok(handler) => handler,
         Err(err) => {
-            return Err(Error::Unknown(
+            return Err(CommonError::Unknown(
                 err.to_string(),
                 "execute git remote add origin",
             ))
@@ -207,7 +201,7 @@ fn remote_add(git_storage_folder_path: &Path, link: &str) -> Result<Child, Error
     Ok(handler)
 }
 
-fn pull(git_storage_folder_path: &Path) -> Result<Child, Error> {
+fn pull(git_storage_folder_path: &Path) -> Result<Child, CommonError> {
     let handler = match Command::new("git")
         .args(["pull", "origin", "main"])
         .current_dir(git_storage_folder_path)
@@ -217,7 +211,7 @@ fn pull(git_storage_folder_path: &Path) -> Result<Child, Error> {
     {
         Ok(handler) => handler,
         Err(err) => {
-            return Err(Error::Unknown(
+            return Err(CommonError::Unknown(
                 err.to_string(),
                 "execute git pull origin main",
             ))

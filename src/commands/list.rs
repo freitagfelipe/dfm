@@ -1,6 +1,6 @@
 use super::Command;
 use crate::git::ExecuterBuilder;
-use crate::utils;
+use crate::utils::{self, CommonError};
 use clap::Args;
 use colored::Colorize;
 use std::path::Path;
@@ -12,13 +12,7 @@ pub enum Error {
     #[error("Your remote repository is empty")]
     EmptyRepository,
     #[error("{0}")]
-    GetStorageFolderPath(String),
-    #[error("You need to set a remote repository before use DFM")]
-    SetRemoteRepository,
-    #[error("{0}")]
-    GitCommand(String),
-    #[error("Something wrong happened: {0}, when trying to: {1}")]
-    Unknown(String, &'static str),
+    Common(CommonError),
 }
 
 /// Lists all the files that are in the remote repository
@@ -31,16 +25,20 @@ impl Command for List {
     fn execute(self) -> Result<String, Self::Error> {
         let git_storage_folder_path = match utils::get_git_storage_folder_path() {
             Ok(path) => path,
-            Err(err) => return Err(Error::GetStorageFolderPath(err.to_string())),
+            Err(err) => {
+                return Err(Error::Common(CommonError::GetStorageFolderPath(
+                    err.to_string(),
+                )))
+            }
         };
 
         let git_storage_folder_path = match git_storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Unknown(
+                return Err(Error::Common(CommonError::Unknown(
                     err.to_string(),
                     "canonicalize the storage folder path",
-                ))
+                )))
             }
         };
 
@@ -49,11 +47,11 @@ impl Command for List {
             .build()
             .run()
         {
-            return Err(Error::GitCommand(err.to_string()));
+            return Err(Error::Common(CommonError::GitCommand(err.to_string())));
         }
 
         if utils::check_if_remote_link_is_added().is_err() {
-            return Err(Error::SetRemoteRepository);
+            return Err(Error::Common(CommonError::SetRemoteRepository));
         }
 
         let mut index = 1;
@@ -61,7 +59,12 @@ impl Command for List {
         for entry in WalkDir::new(git_storage_folder_path).max_depth(1) {
             let entry = match entry {
                 Ok(entry) => entry,
-                Err(err) => return Err(Error::Unknown(err.to_string(), "get a dir entry")),
+                Err(err) => {
+                    return Err(Error::Common(CommonError::Unknown(
+                        err.to_string(),
+                        "get a dir entry",
+                    )))
+                }
             };
 
             if Path::new(&entry.path()).is_dir() {
@@ -71,10 +74,10 @@ impl Command for List {
             let entry = match entry.file_name().to_str() {
                 Some(entry) => entry,
                 None => {
-                    return Err(Error::Unknown(
+                    return Err(Error::Common(CommonError::Unknown(
                         "invalid UTF-8".to_string(),
                         "convert OsStr to str",
-                    ))
+                    )))
                 }
             };
 
