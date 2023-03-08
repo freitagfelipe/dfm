@@ -2,6 +2,7 @@ use super::Command;
 use crate::git::ExecuterBuilder;
 use crate::utils;
 use clap::{Args, Subcommand};
+use regex::Regex;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -15,6 +16,8 @@ pub enum Error {
     AlreadyAdded,
     #[error("Remote repository not setted yet")]
     NotSetted,
+    #[error("Not a ssh link")]
+    NotSSH,
     #[error("{0}")]
     GetStorageFolderPath(String),
     #[error("{0}")]
@@ -65,6 +68,17 @@ fn set_remote_link(
 ) -> Result<String, Error> {
     if storage_folder_path.join("remote.txt").exists() {
         return Err(Error::AlreadyAdded);
+    }
+
+    let regex = match Regex::new(r"git@git((hub)|(lab))\.com:\S*/\S*\.git") {
+        Ok(regex) => regex,
+        Err(err) => return Err(Error::Unknown(err.to_string(), "create the ssh regex")),
+    };
+
+    println!("{}", regex.as_str());
+
+    if !regex.is_match(link) {
+        return Err(Error::NotSSH);
     }
 
     let mut file = match File::create(storage_folder_path.join("remote.txt")) {
