@@ -76,8 +76,6 @@ fn set_remote_link(
         }
     };
 
-    println!("{}", regex.as_str());
-
     if !regex.is_match(link) {
         return Err(Error::NotSSH);
     }
