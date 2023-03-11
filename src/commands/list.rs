@@ -1,6 +1,7 @@
 use super::Command;
+use crate::error::{CommandError, ExecutionError};
 use crate::git::ExecuterBuilder;
-use crate::utils::{self, CommonError};
+use crate::utils;
 use clap::Args;
 use colored::Colorize;
 use std::path::Path;
@@ -11,8 +12,14 @@ use walkdir::WalkDir;
 pub enum Error {
     #[error("Your remote repository is empty")]
     EmptyRepository,
-    #[error("{0}")]
-    Common(CommonError),
+    #[error("You need to set a remote repository before use DFM")]
+    SetRemoteRepository,
+}
+
+impl From<Error> for CommandError {
+    fn from(err: Error) -> Self {
+        CommandError::Usage(err.to_string())
+    }
 }
 
 /// Lists all the files that are in the remote repository
@@ -20,38 +27,31 @@ pub enum Error {
 pub struct List;
 
 impl Command for List {
-    type Error = Error;
-
-    fn execute(self) -> Result<String, Self::Error> {
+    fn execute(self) -> Result<String, CommandError> {
         let git_storage_folder_path = match utils::get_git_storage_folder_path() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Common(CommonError::GetStorageFolderPath(
-                    err.to_string(),
-                )))
+                return Err(ExecutionError::GetStorageFolderPath(err.to_string()).into());
             }
         };
 
         let git_storage_folder_path = match git_storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Common(CommonError::Unknown(
-                    err.to_string(),
-                    "canonicalize the storage folder path",
-                )))
+                return Err(ExecutionError::CanonicalizePath(err.to_string()).into());
             }
         };
+
+        if utils::check_if_remote_link_is_added().is_err() {
+            return Err(Error::SetRemoteRepository.into());
+        }
 
         if let Err(err) = ExecuterBuilder::new(&git_storage_folder_path)
             .run_pull()
             .build()
             .run()
         {
-            return Err(Error::Common(CommonError::GitCommand(err.to_string())));
-        }
-
-        if utils::check_if_remote_link_is_added().is_err() {
-            return Err(Error::Common(CommonError::SetRemoteRepository));
+            return Err(err.into());
         }
 
         let mut index = 1;
@@ -60,10 +60,7 @@ impl Command for List {
             let entry = match entry {
                 Ok(entry) => entry,
                 Err(err) => {
-                    return Err(Error::Common(CommonError::Unknown(
-                        err.to_string(),
-                        "get a dir entry",
-                    )))
+                    return Err(ExecutionError::GetDirEntry(err.to_string()).into());
                 }
             };
 
@@ -74,10 +71,7 @@ impl Command for List {
             let entry = match entry.file_name().to_str() {
                 Some(entry) => entry,
                 None => {
-                    return Err(Error::Common(CommonError::Unknown(
-                        "invalid UTF-8".to_string(),
-                        "convert OsStr to str",
-                    )))
+                    return Err(ExecutionError::InvalidUTF8("convert OsStr to &str").into());
                 }
             };
 
@@ -87,7 +81,7 @@ impl Command for List {
         }
 
         if index == 1 {
-            return Err(Error::EmptyRepository);
+            return Err(Error::EmptyRepository.into());
         }
 
         Ok("Finished listing your files".to_string())

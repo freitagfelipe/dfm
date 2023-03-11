@@ -1,17 +1,23 @@
 use super::Command;
+use crate::error::{CommandError, ExecutionError};
 use crate::git::ExecuterBuilder;
-use crate::utils::{self, CommonError};
+use crate::utils;
 use clap::Args;
 use std::fs;
-use std::path::Path;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("File does not exist in the repository")]
     FileDoesNotExists,
-    #[error("{0}")]
-    Common(CommonError),
+    #[error("You need to set a remote repository before use DFM")]
+    SetRemoteRepository,
+}
+
+impl From<Error> for CommandError {
+    fn from(err: Error) -> Self {
+        CommandError::Usage(err.to_string())
+    }
 }
 
 /// Removes a file from the remote repository
@@ -21,57 +27,38 @@ pub struct Remove {
     name: String,
 }
 
-fn execute_git_commands(git_storage_folder_path: &Path, file_name: &str) -> Result<(), Error> {
-    if let Err(err) = ExecuterBuilder::new(git_storage_folder_path)
-        .run_commit(&format!("Remove {file_name}"))
-        .build()
-        .run()
-    {
-        return Err(Error::Common(CommonError::GitCommand(err.to_string())));
-    }
-
-    Ok(())
-}
-
 impl Command for Remove {
-    type Error = Error;
-
-    fn execute(self) -> Result<String, Self::Error> {
+    fn execute(self) -> Result<String, CommandError> {
         let git_storage_folder_path = match utils::get_git_storage_folder_path() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Common(CommonError::GetStorageFolderPath(
-                    err.to_string(),
-                )))
+                return Err(ExecutionError::GetStorageFolderPath(err.to_string()).into());
             }
         };
 
         let storage_folder_path = match git_storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Common(CommonError::Unknown(
-                    err.to_string(),
-                    "canonicalize the storage folder path",
-                )))
+                return Err(ExecutionError::CanonicalizePath(err.to_string()).into());
             }
         };
 
         if utils::check_if_remote_link_is_added().is_err() {
-            return Err(Error::Common(CommonError::SetRemoteRepository));
+            return Err(Error::SetRemoteRepository.into());
         }
 
         if !utils::check_if_file_exists(&storage_folder_path, &self.name) {
-            return Err(Error::FileDoesNotExists);
+            return Err(Error::FileDoesNotExists.into());
         }
 
         if let Err(err) = fs::remove_file(storage_folder_path.join(&self.name)) {
-            return Err(Error::Common(CommonError::Unknown(
-                err.to_string(),
-                "remove a file",
-            )));
+            return Err(ExecutionError::RemoveFile(err.to_string()).into());
         }
 
-        execute_git_commands(&storage_folder_path, &self.name)?;
+        ExecuterBuilder::new(&git_storage_folder_path)
+            .run_commit(&format!("Remove {}", self.name))
+            .build()
+            .run()?;
 
         Ok("Successfully removed the file and synchronized the local repository with the remote repository".to_string())
     }

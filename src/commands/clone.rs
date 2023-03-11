@@ -1,5 +1,6 @@
 use super::Command;
-use crate::utils::{self, CommonError};
+use crate::error::{CommandError, ExecutionError};
+use crate::utils;
 use clap::Args;
 use std::{env, fs};
 use thiserror::Error;
@@ -8,8 +9,12 @@ use thiserror::Error;
 pub enum Error {
     #[error("File does not exist in the repository")]
     FileDoesNotExists,
-    #[error("{0}")]
-    Common(CommonError),
+}
+
+impl From<Error> for CommandError {
+    fn from(err: Error) -> Self {
+        CommandError::Usage(err.to_string())
+    }
 }
 
 /// Clones a file from the repository to your current directory
@@ -20,39 +25,29 @@ pub struct Clone {
 }
 
 impl Command for Clone {
-    type Error = Error;
-
-    fn execute(self) -> Result<String, Self::Error> {
+    fn execute(self) -> Result<String, CommandError> {
         let storage_folder_path = match utils::get_storage_folder_path() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Common(CommonError::GetStorageFolderPath(
-                    err.to_string(),
-                )))
+                return Err(ExecutionError::GetStorageFolderPath(err.to_string()).into());
             }
         };
 
         let storage_folder_path = match storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Common(CommonError::Unknown(
-                    err.to_string(),
-                    "canonicalize the storage folder path",
-                )))
+                return Err(ExecutionError::CanonicalizePath(err.to_string()).into());
             }
         };
 
         if !utils::check_if_file_exists(&storage_folder_path, &self.name) {
-            return Err(Error::FileDoesNotExists);
+            return Err(Error::FileDoesNotExists.into());
         }
 
         let current_dir = match env::current_dir() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Common(CommonError::Unknown(
-                    err.to_string(),
-                    "get the current dir",
-                )));
+                return Err(ExecutionError::GetCurrentDir(err.to_string()).into());
             }
         };
 
@@ -60,10 +55,7 @@ impl Command for Clone {
             storage_folder_path.join(&self.name),
             current_dir.join(&self.name),
         ) {
-            return Err(Error::Common(CommonError::Unknown(
-                err.to_string(),
-                "copy the file",
-            )));
+            return Err(ExecutionError::CopyFile(err.to_string()).into());
         }
 
         Ok("Successfully cloned the file to your current directory".to_string())

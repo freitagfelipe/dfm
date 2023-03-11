@@ -6,6 +6,7 @@ mod remove;
 mod reset;
 mod update;
 
+use crate::error::CommandError;
 pub use add::Add;
 pub use clone::Clone;
 use colored::Colorize;
@@ -13,15 +14,12 @@ pub use list::List;
 pub use remote::Remote;
 pub use remove::Remove;
 pub use reset::Reset;
-use std::error;
 pub use update::Update;
 
 pub trait Command: Sized {
-    type Error: error::Error;
+    fn execute(self) -> Result<String, CommandError>;
 
-    fn execute(self) -> Result<String, Self::Error>;
-
-    fn error(err: Self::Error) {
+    fn error(err: CommandError) {
         println!("{}", err.to_string().red());
     }
 

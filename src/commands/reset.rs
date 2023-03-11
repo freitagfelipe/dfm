@@ -1,16 +1,21 @@
 use super::Command;
+use crate::error::{CommandError, ExecutionError};
 use crate::setup;
-use crate::utils::{self, CommonError};
+use crate::utils;
 use clap::Args;
 use std::fs;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("{0}")]
-    SetupRelated(String),
-    #[error("{0}")]
-    Common(CommonError),
+    #[error("You need to set a remote repository before use DFM")]
+    SetRemoteRepository,
+}
+
+impl From<Error> for CommandError {
+    fn from(err: Error) -> Self {
+        CommandError::Usage(err.to_string())
+    }
 }
 
 /// Resets your DFM to the initial state (be careful using that)
@@ -18,49 +23,34 @@ pub enum Error {
 pub struct Reset;
 
 impl Command for Reset {
-    type Error = Error;
-
-    fn execute(self) -> Result<String, Self::Error> {
+    fn execute(self) -> Result<String, CommandError> {
         let git_storage_folder_path = match utils::get_git_storage_folder_path() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Common(CommonError::GetStorageFolderPath(
-                    err.to_string(),
-                )))
+                return Err(ExecutionError::GetStorageFolderPath(err.to_string()).into());
             }
         };
 
         let git_storage_folder_path = match git_storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Common(CommonError::Unknown(
-                    err.to_string(),
-                    "canonicalize the storage folder path",
-                )))
+                return Err(ExecutionError::CanonicalizePath(err.to_string()).into());
             }
         };
 
         if utils::check_if_remote_link_is_added().is_err() {
-            return Err(Error::Common(CommonError::SetRemoteRepository));
+            return Err(Error::SetRemoteRepository.into());
         }
 
         if let Err(err) = fs::remove_dir_all(&git_storage_folder_path) {
-            return Err(Error::Common(CommonError::Unknown(
-                err.to_string(),
-                "remove the storage folder",
-            )));
+            return Err(ExecutionError::RemoveStorageFolder(err.to_string()).into());
         }
 
         if let Err(err) = fs::create_dir_all(&git_storage_folder_path) {
-            return Err(Error::Common(CommonError::Unknown(
-                err.to_string(),
-                "create the storage folder",
-            )));
+            return Err(ExecutionError::CreateStorageFolder(err.to_string()).into());
         }
 
-        if let Err(err) = setup::execute_git_commands(&git_storage_folder_path) {
-            return Err(Error::SetupRelated(err.to_string()));
-        }
+        setup::execute_git_commands(&git_storage_folder_path)?;
 
         Ok("Successfully reseted the DFM to the initial state".to_string())
     }

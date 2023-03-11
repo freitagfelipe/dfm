@@ -1,5 +1,6 @@
+use crate::error::{CommandError, ExecutionError};
 use crate::git::ExecuterBuilder;
-use crate::utils::{self, CommonError};
+use crate::utils;
 use std::fs;
 use std::path::Path;
 use std::process::{Command, Stdio};
@@ -9,11 +10,15 @@ use thiserror::Error;
 pub enum Error {
     #[error("You need to have git installed to use DFM")]
     NeedGit,
-    #[error("{0}")]
-    Common(CommonError),
 }
 
-fn check_if_git_is_installed() -> Result<(), Error> {
+impl From<Error> for CommandError {
+    fn from(err: Error) -> Self {
+        CommandError::Usage(err.to_string())
+    }
+}
+
+fn check_if_git_is_installed() -> Result<(), CommandError> {
     let status = match Command::new("git")
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -21,45 +26,41 @@ fn check_if_git_is_installed() -> Result<(), Error> {
     {
         Ok(status) => status,
         Err(err) => {
-            return Err(Error::Common(CommonError::Unknown(
-                err.to_string(),
-                "execute git",
-            )))
+            return Err(ExecutionError::GitCommand {
+                command: "git",
+                err: err.to_string(),
+            }
+            .into());
         }
     };
 
     let Some(command_code) = status.code() else {
-        return Err(Error::Common(CommonError::Unknown("process terminated by signal".to_string(), "get git status code")));
+        return Err(ExecutionError::Unknown { err: "process terminated by signal".to_string(), trying_to: "get git status code" }.into());
     };
 
     if command_code != 1 {
-        return Err(Error::NeedGit);
+        return Err(Error::NeedGit.into());
     }
 
     Ok(())
 }
 
-pub fn execute_git_commands(git_storage_folder_path: &Path) -> Result<(), Error> {
-    if let Err(err) = ExecuterBuilder::new(git_storage_folder_path)
+pub fn execute_git_commands(git_storage_folder_path: &Path) -> Result<(), ExecutionError> {
+    ExecuterBuilder::new(git_storage_folder_path)
         .run_init()
         .build()
-        .run()
-    {
-        return Err(Error::Common(CommonError::GitCommand(err.to_string())));
-    }
+        .run()?;
 
     Ok(())
 }
 
-pub fn setup() -> Result<(), Error> {
+pub fn setup() -> Result<(), CommandError> {
     check_if_git_is_installed()?;
 
     let git_storage_folder_path = match utils::get_git_storage_folder_path() {
         Ok(path) => path,
         Err(err) => {
-            return Err(Error::Common(CommonError::GetStorageFolderPath(
-                err.to_string(),
-            )))
+            return Err(ExecutionError::GetStorageFolderPath(err.to_string()).into());
         }
     };
 
@@ -68,19 +69,13 @@ pub fn setup() -> Result<(), Error> {
     }
 
     if let Err(err) = fs::create_dir_all(&git_storage_folder_path) {
-        return Err(Error::Common(CommonError::Unknown(
-            err.to_string(),
-            "create the storage folder",
-        )));
+        return Err(ExecutionError::CreateStorageFolder(err.to_string()).into());
     }
 
     let storage_folder_path = match git_storage_folder_path.canonicalize() {
         Ok(path) => path,
         Err(err) => {
-            return Err(Error::Common(CommonError::Unknown(
-                err.to_string(),
-                "canonicalize the storage folder path",
-            )));
+            return Err(ExecutionError::CanonicalizePath(err.to_string()).into());
         }
     };
 

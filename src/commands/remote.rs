@@ -1,6 +1,7 @@
 use super::Command;
+use crate::error::{CommandError, ExecutionError};
 use crate::git::ExecuterBuilder;
-use crate::utils::{self, CommonError};
+use crate::utils;
 use clap::{Args, Subcommand};
 use regex::Regex;
 use std::fs::File;
@@ -18,8 +19,12 @@ pub enum Error {
     NotSetted,
     #[error("Not a ssh link")]
     NotSSH,
-    #[error("{0}")]
-    Common(CommonError),
+}
+
+impl From<Error> for CommandError {
+    fn from(err: Error) -> Self {
+        CommandError::Usage(err.to_string())
+    }
 }
 
 /// Manages the remote repository
@@ -44,115 +49,84 @@ pub enum Subcommands {
     Set(Set),
 }
 
-fn execute_git_command(git_storage_folder_path: &Path, link: &str) -> Result<(), Error> {
-    if let Err(err) = ExecuterBuilder::new(git_storage_folder_path)
-        .run_remote_add(link)
-        .run_pull()
-        .build()
-        .run()
-    {
-        return Err(Error::Common(CommonError::GitCommand(err.to_string())));
-    }
-
-    Ok(())
-}
-
 fn set_remote_link(
     storage_folder_path: &Path,
     git_storage_folder_path: &Path,
     link: &str,
-) -> Result<String, Error> {
+) -> Result<String, CommandError> {
     if storage_folder_path.join("remote.txt").exists() {
-        return Err(Error::AlreadyAdded);
+        return Err(Error::AlreadyAdded.into());
     }
 
     let regex = match Regex::new(r"git@git((hub)|(lab))\.com:\S*/\S*\.git") {
         Ok(regex) => regex,
         Err(err) => {
-            return Err(Error::Common(CommonError::Unknown(
-                err.to_string(),
-                "create the ssh regex",
-            )))
+            return Err(ExecutionError::Regex(err.to_string()).into());
         }
     };
 
     if !regex.is_match(link) {
-        return Err(Error::NotSSH);
+        return Err(Error::NotSSH.into());
     }
 
     let mut file = match File::create(storage_folder_path.join("remote.txt")) {
         Ok(file) => file,
         Err(err) => {
-            return Err(Error::Common(CommonError::Unknown(
-                err.to_string(),
-                "create a file",
-            )))
+            return Err(ExecutionError::CreateFile(err.to_string()).into());
         }
     };
 
     if let Err(err) = file.write_all(link.as_bytes()) {
-        return Err(Error::Common(CommonError::Unknown(
-            err.to_string(),
-            "write to a file",
-        )));
+        return Err(ExecutionError::WriteToFile(err.to_string()).into());
     }
 
-    execute_git_command(git_storage_folder_path, link)?;
+    ExecuterBuilder::new(git_storage_folder_path)
+        .run_remote_add(link)
+        .run_pull()
+        .build()
+        .run()?;
 
     Ok("Successfully setted the remote repository and synchronized the local repository with the remote repository".to_string())
 }
 
-fn show_remote_link(storage_folder_path: &Path) -> Result<String, Error> {
+fn show_remote_link(storage_folder_path: &Path) -> Result<String, CommandError> {
     if !storage_folder_path.join("remote.txt").exists() {
-        return Err(Error::NotSetted);
+        return Err(Error::NotSetted.into());
     }
 
     let mut file = match File::open(storage_folder_path.join("remote.txt")) {
         Ok(file) => file,
         Err(err) => {
-            return Err(Error::Common(CommonError::Unknown(
-                err.to_string(),
-                "open a file",
-            )))
+            return Err(ExecutionError::OpenFile(err.to_string()).into());
         }
     };
 
     let mut content = Vec::new();
 
     if let Err(err) = file.read_to_end(&mut content) {
-        return Err(Error::Common(CommonError::Unknown(
-            err.to_string(),
-            "read a file",
-        )));
+        return Err(ExecutionError::ReadFile(err.to_string()).into());
     }
 
     let Ok(content) = String::from_utf8(content) else {
-        return Err(Error::Common(CommonError::Unknown("Invalid UTF-8".to_string(), "convert vec<u8> to String")));
+        return Err(ExecutionError::InvalidUTF8("Convert Vec<u8> to String").into());
     };
 
     Ok(content)
 }
 
 impl Command for Remote {
-    type Error = Error;
-
-    fn execute(self) -> Result<String, Self::Error> {
+    fn execute(self) -> Result<String, CommandError> {
         let storage_folder_path = match utils::get_storage_folder_path() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Common(CommonError::GetStorageFolderPath(
-                    err.to_string(),
-                )))
+                return Err(ExecutionError::GetStorageFolderPath(err.to_string()).into());
             }
         };
 
         let storage_folder_path = match storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
-                return Err(Error::Common(CommonError::Unknown(
-                    err.to_string(),
-                    "canonicalize the storage folder path",
-                )))
+                return Err(ExecutionError::CanonicalizePath(err.to_string()).into());
             }
         };
 
