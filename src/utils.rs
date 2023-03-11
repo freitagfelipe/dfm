@@ -1,9 +1,9 @@
 use crate::error::{CommandError, ExecutionError};
 use std::env;
+use std::fs::{self, File};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
-use std::fs::{self, File};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -74,7 +74,10 @@ pub fn write_to_log_file(content: &str) -> Result<(), ExecutionError> {
             }
         }
     } else {
-        match fs::OpenOptions::new().append(true).open(dfm_folder_path.join("log.txt")) {
+        match fs::OpenOptions::new()
+            .append(true)
+            .open(dfm_folder_path.join("log.txt"))
+        {
             Ok(file) => file,
             Err(err) => {
                 return Err(ExecutionError::OpenFile(err.to_string()));

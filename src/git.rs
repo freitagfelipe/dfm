@@ -1,6 +1,6 @@
 use crate::error::ExecutionError;
 use std::path::Path;
-use std::process::{Output, Command, Stdio};
+use std::process::{Command, Output, Stdio};
 
 pub struct GitCommandExecuter<'a> {
     git_storage_folder_path: &'a Path,
@@ -42,11 +42,17 @@ impl GitCommandExecuter<'_> {
             return Err(ExecutionError::NoSuccess("git init"));
         }
 
-        if self.run_remote_add && !remote_add(self.git_storage_folder_path, &self.remote_link)?.status.success() {
+        if self.run_remote_add
+            && !remote_add(self.git_storage_folder_path, &self.remote_link)?
+                .status
+                .success()
+        {
             return Err(ExecutionError::NoSuccess("git remote add"));
         }
 
-        if (self.run_pull || self.run_commit) && !pull(self.git_storage_folder_path)?.status.success() {
+        if (self.run_pull || self.run_commit)
+            && !pull(self.git_storage_folder_path)?.status.success()
+        {
             return Err(ExecutionError::NoSuccess("git pull"));
         }
 
@@ -58,7 +64,10 @@ impl GitCommandExecuter<'_> {
             return Err(ExecutionError::NoSuccess("git add"));
         }
 
-        if !commit(self.git_storage_folder_path, &self.commit_message)?.status.success() {
+        if !commit(self.git_storage_folder_path, &self.commit_message)?
+            .status
+            .success()
+        {
             return Err(ExecutionError::NoSuccess("git commit"));
         }
 

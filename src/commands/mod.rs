@@ -34,7 +34,11 @@ pub trait Command: Sized {
         );
 
         if let Err(err) = write_to_log_file(&err.to_string()) {
-            eprintln!("{}: {}", "Error while trying to write in the log file".red(), err.to_string().red());
+            eprintln!(
+                "{}: {}",
+                "Error while trying to write in the log file".red(),
+                err.to_string().red()
+            );
         }
     }
 
