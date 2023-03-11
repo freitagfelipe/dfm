@@ -4,6 +4,7 @@ mod list;
 mod remote;
 mod remove;
 mod reset;
+mod sync;
 mod update;
 
 use crate::error::CommandError;
@@ -14,6 +15,7 @@ pub use list::List;
 pub use remote::Remote;
 pub use remove::Remove;
 pub use reset::Reset;
+pub use sync::Sync;
 pub use update::Update;
 
 pub trait Command: Sized {

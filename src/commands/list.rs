@@ -1,6 +1,5 @@
 use super::Command;
 use crate::error::{CommandError, ExecutionError};
-use crate::git::GitCommandExecuterBuilder;
 use crate::utils;
 use clap::Args;
 use colored::Colorize;
@@ -12,8 +11,6 @@ use walkdir::WalkDir;
 pub enum Error {
     #[error("Your remote repository is empty")]
     EmptyRepository,
-    #[error("You need to set a remote repository before use DFM")]
-    SetRemoteRepository,
 }
 
 impl From<Error> for CommandError {
@@ -41,18 +38,6 @@ impl Command for List {
                 return Err(ExecutionError::CanonicalizePath(err.to_string()).into());
             }
         };
-
-        if utils::check_if_remote_link_is_added().is_err() {
-            return Err(Error::SetRemoteRepository.into());
-        }
-
-        if let Err(err) = GitCommandExecuterBuilder::new(&git_storage_folder_path)
-            .run_pull()
-            .build()
-            .run()
-        {
-            return Err(err.into());
-        }
 
         let mut index = 1;
 
