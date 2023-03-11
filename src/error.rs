@@ -34,8 +34,8 @@ pub enum ExecutionError {
     InvalidUTF8(&'static str),
     #[error("Error while trying to create the ssh regex: {0}")]
     Regex(String),
-    #[error("Error while waiting execute {command:?}: {err:?}")]
-    WaitingCommand { command: &'static str, err: String },
+    #[error("Error while trying to execute {0} non zero status code")]
+    NoSuccess(&'static str),
     #[error("Something wrong happened: {err:?}, while trying to: {trying_to:?}")]
     Unknown {
         err: String,

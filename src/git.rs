@@ -1,6 +1,6 @@
 use crate::error::ExecutionError;
 use std::path::Path;
-use std::process::{Child, Command, Stdio};
+use std::process::{Output, Command, Stdio};
 
 pub struct GitCommandExecuter<'a> {
     git_storage_folder_path: &'a Path,
@@ -38,56 +38,32 @@ impl From<GitError> for ExecutionError {
 
 impl GitCommandExecuter<'_> {
     pub fn run(self) -> Result<(), ExecutionError> {
-        if self.run_init {
-            if let Err(err) = init(self.git_storage_folder_path)?.wait() {
-                return Err(ExecutionError::WaitingCommand {
-                    command: "git init",
-                    err: err.to_string(),
-                });
-            }
+        if self.run_init && !init(self.git_storage_folder_path)?.status.success() {
+            return Err(ExecutionError::NoSuccess("git init"));
         }
 
-        if self.run_remote_add {
-            if let Err(err) = remote_add(self.git_storage_folder_path, &self.remote_link)?.wait() {
-                return Err(ExecutionError::WaitingCommand {
-                    command: "git remote add",
-                    err: err.to_string(),
-                });
-            }
+        if self.run_remote_add && !remote_add(self.git_storage_folder_path, &self.remote_link)?.status.success() {
+            return Err(ExecutionError::NoSuccess("git remote add"));
         }
 
-        if self.run_pull || self.run_commit {
-            if let Err(err) = pull(self.git_storage_folder_path)?.wait() {
-                return Err(ExecutionError::WaitingCommand {
-                    command: "git pull",
-                    err: err.to_string(),
-                });
-            }
+        if (self.run_pull || self.run_commit) && !pull(self.git_storage_folder_path)?.status.success() {
+            return Err(ExecutionError::NoSuccess("git pull"));
         }
 
         if !self.run_commit {
             return Ok(());
         }
 
-        if let Err(err) = add_all(self.git_storage_folder_path)?.wait() {
-            return Err(ExecutionError::WaitingCommand {
-                command: "git add",
-                err: err.to_string(),
-            });
+        if !add_all(self.git_storage_folder_path)?.status.success() {
+            return Err(ExecutionError::NoSuccess("git add"));
         }
 
-        if let Err(err) = commit(self.git_storage_folder_path, &self.commit_message)?.wait() {
-            return Err(ExecutionError::WaitingCommand {
-                command: "git commit",
-                err: err.to_string(),
-            });
+        if !commit(self.git_storage_folder_path, &self.commit_message)?.status.success() {
+            return Err(ExecutionError::NoSuccess("git commit"));
         }
 
-        if let Err(err) = push(self.git_storage_folder_path)?.wait() {
-            return Err(ExecutionError::WaitingCommand {
-                command: "git push",
-                err: err.to_string(),
-            });
+        if !push(self.git_storage_folder_path)?.status.success() {
+            return Err(ExecutionError::NoSuccess("git push"));
         }
 
         Ok(())
@@ -146,15 +122,15 @@ impl<'a> GitCommandExecuterBuilder<'a> {
     }
 }
 
-fn init(git_storage_folder_path: &Path) -> Result<Child, GitError> {
-    let handler = match Command::new("git")
+fn init(git_storage_folder_path: &Path) -> Result<Output, GitError> {
+    let output = match Command::new("git")
         .arg("init")
         .current_dir(git_storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
-        .spawn()
+        .output()
     {
-        Ok(handler) => handler,
+        Ok(output) => output,
         Err(err) => {
             return Err(GitError {
                 command: "init",
@@ -163,18 +139,18 @@ fn init(git_storage_folder_path: &Path) -> Result<Child, GitError> {
         }
     };
 
-    Ok(handler)
+    Ok(output)
 }
 
-fn add_all(git_storage_folder_path: &Path) -> Result<Child, GitError> {
-    let handler = match Command::new("git")
+fn add_all(git_storage_folder_path: &Path) -> Result<Output, GitError> {
+    let output = match Command::new("git")
         .args(["add", "."])
         .current_dir(git_storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
-        .spawn()
+        .output()
     {
-        Ok(handler) => handler,
+        Ok(output) => output,
         Err(err) => {
             return Err(GitError {
                 command: "add",
@@ -183,18 +159,18 @@ fn add_all(git_storage_folder_path: &Path) -> Result<Child, GitError> {
         }
     };
 
-    Ok(handler)
+    Ok(output)
 }
 
-fn commit(git_storage_folder_path: &Path, commit_name: &str) -> Result<Child, GitError> {
-    let handler = match Command::new("git")
+fn commit(git_storage_folder_path: &Path, commit_name: &str) -> Result<Output, GitError> {
+    let output = match Command::new("git")
         .args(["commit", "-m", commit_name])
         .current_dir(git_storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
-        .spawn()
+        .output()
     {
-        Ok(handler) => handler,
+        Ok(output) => output,
         Err(err) => {
             return Err(GitError {
                 command: "commit",
@@ -203,18 +179,18 @@ fn commit(git_storage_folder_path: &Path, commit_name: &str) -> Result<Child, Gi
         }
     };
 
-    Ok(handler)
+    Ok(output)
 }
 
-fn push(git_storage_folder_path: &Path) -> Result<Child, GitError> {
-    let handler = match Command::new("git")
+fn push(git_storage_folder_path: &Path) -> Result<Output, GitError> {
+    let output = match Command::new("git")
         .args(["push", "origin", "main"])
         .current_dir(git_storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
-        .spawn()
+        .output()
     {
-        Ok(handler) => handler,
+        Ok(output) => output,
         Err(err) => {
             return Err(GitError {
                 command: "push",
@@ -223,18 +199,18 @@ fn push(git_storage_folder_path: &Path) -> Result<Child, GitError> {
         }
     };
 
-    Ok(handler)
+    Ok(output)
 }
 
-fn remote_add(git_storage_folder_path: &Path, link: &str) -> Result<Child, GitError> {
-    let handler = match Command::new("git")
+fn remote_add(git_storage_folder_path: &Path, link: &str) -> Result<Output, GitError> {
+    let output = match Command::new("git")
         .args(["remote", "add", "origin", link])
         .current_dir(git_storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
-        .spawn()
+        .output()
     {
-        Ok(handler) => handler,
+        Ok(output) => output,
         Err(err) => {
             return Err(GitError {
                 command: "remote add",
@@ -243,18 +219,18 @@ fn remote_add(git_storage_folder_path: &Path, link: &str) -> Result<Child, GitEr
         }
     };
 
-    Ok(handler)
+    Ok(output)
 }
 
-fn pull(git_storage_folder_path: &Path) -> Result<Child, GitError> {
-    let handler = match Command::new("git")
+fn pull(git_storage_folder_path: &Path) -> Result<Output, GitError> {
+    let output = match Command::new("git")
         .args(["pull", "origin", "main"])
         .current_dir(git_storage_folder_path)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
-        .spawn()
+        .output()
     {
-        Ok(handler) => handler,
+        Ok(output) => output,
         Err(err) => {
             return Err(GitError {
                 command: "git pull",
@@ -263,5 +239,5 @@ fn pull(git_storage_folder_path: &Path) -> Result<Child, GitError> {
         }
     };
 
-    Ok(handler)
+    Ok(output)
 }
