@@ -19,6 +19,8 @@ pub enum Error {
     NotSetted,
     #[error("Not a ssh link")]
     NotSSH,
+    #[error("No internet connection")]
+    NoInternetConnection,
 }
 
 impl From<Error> for CommandError {
@@ -54,6 +56,10 @@ fn set_remote_link(
     git_storage_folder_path: &Path,
     link: &str,
 ) -> Result<String, CommandError> {
+    if online::check(None).is_err() {
+        return Err(Error::NoInternetConnection.into());
+    }
+
     if storage_folder_path.join("remote.txt").exists() {
         return Err(Error::AlreadyAdded.into());
     }

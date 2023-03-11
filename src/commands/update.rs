@@ -19,6 +19,8 @@ pub enum Error {
     NothingToUpdate,
     #[error("You need to set a remote repository before use DFM")]
     SetRemoteRepository,
+    #[error("No internet connection")]
+    NoInternetConnection,
 }
 
 impl From<Error> for CommandError {
@@ -59,6 +61,10 @@ fn check_if_files_are_equal(first_file: &Path, second_file: &Path) -> Result<boo
 
 impl Command for Update {
     fn execute(self) -> Result<String, CommandError> {
+        if online::check(None).is_err() {
+            return Err(Error::NoInternetConnection.into());
+        }
+
         let git_storage_folder_path = match utils::get_git_storage_folder_path() {
             Ok(path) => path,
             Err(err) => {

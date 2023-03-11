@@ -12,6 +12,8 @@ pub enum Error {
     FileDoesNotExists,
     #[error("You need to set a remote repository before use DFM")]
     SetRemoteRepository,
+    #[error("No internet connection")]
+    NoInternetConnection,
 }
 
 impl From<Error> for CommandError {
@@ -29,6 +31,10 @@ pub struct Remove {
 
 impl Command for Remove {
     fn execute(self) -> Result<String, CommandError> {
+        if online::check(None).is_err() {
+            return Err(Error::NoInternetConnection.into());
+        }
+
         let git_storage_folder_path = match utils::get_git_storage_folder_path() {
             Ok(path) => path,
             Err(err) => {
