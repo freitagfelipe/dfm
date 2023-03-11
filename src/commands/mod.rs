@@ -7,7 +7,7 @@ mod reset;
 mod sync;
 mod update;
 
-use crate::error::CommandError;
+use crate::{error::CommandError, utils::write_to_log_file};
 pub use add::Add;
 pub use clone::Clone;
 use colored::Colorize;
@@ -22,7 +22,20 @@ pub trait Command: Sized {
     fn execute(self) -> Result<String, CommandError>;
 
     fn error(err: CommandError) {
-        println!("{}", err.to_string().red());
+        if let CommandError::Usage(err) = err {
+            eprintln!("{}", err.red());
+
+            return;
+        }
+
+        eprintln!(
+            "{}",
+            "Something goes wrong during the command executation, please try again".red()
+        );
+
+        if let Err(err) = write_to_log_file(&err.to_string()) {
+            eprintln!("{}: {}", "Error while trying to write in the log file".red(), err.to_string().red());
+        }
     }
 
     fn call(self) {
