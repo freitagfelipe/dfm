@@ -26,21 +26,21 @@ pub struct Clone {
 
 impl Command for Clone {
     fn execute(self) -> Result<String, CommandError> {
-        let storage_folder_path = match utils::get_storage_folder_path() {
+        let git_storage_folder_path = match utils::get_dfm_folder_path() {
             Ok(path) => path,
             Err(err) => {
                 return Err(ExecutionError::GetStorageFolderPath(err.to_string()).into());
             }
         };
 
-        let storage_folder_path = match storage_folder_path.canonicalize() {
+        let git_storage_folder_path = match git_storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
                 return Err(ExecutionError::CanonicalizePath(err.to_string()).into());
             }
         };
 
-        if !utils::check_if_file_exists(&storage_folder_path, &self.name) {
+        if !utils::check_if_file_exists(&git_storage_folder_path, &self.name) {
             return Err(Error::FileDoesNotExists.into());
         }
 
@@ -52,7 +52,7 @@ impl Command for Clone {
         };
 
         if let Err(err) = fs::copy(
-            storage_folder_path.join(&self.name),
+            git_storage_folder_path.join(&self.name),
             current_dir.join(&self.name),
         ) {
             return Err(ExecutionError::CopyFile(err.to_string()).into());

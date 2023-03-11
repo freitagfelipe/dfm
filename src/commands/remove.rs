@@ -42,7 +42,7 @@ impl Command for Remove {
             }
         };
 
-        let storage_folder_path = match git_storage_folder_path.canonicalize() {
+        let git_storage_folder_path = match git_storage_folder_path.canonicalize() {
             Ok(path) => path,
             Err(err) => {
                 return Err(ExecutionError::CanonicalizePath(err.to_string()).into());
@@ -53,11 +53,11 @@ impl Command for Remove {
             return Err(Error::SetRemoteRepository.into());
         }
 
-        if !utils::check_if_file_exists(&storage_folder_path, &self.name) {
+        if !utils::check_if_file_exists(&git_storage_folder_path, &self.name) {
             return Err(Error::FileDoesNotExists.into());
         }
 
-        if let Err(err) = fs::remove_file(storage_folder_path.join(&self.name)) {
+        if let Err(err) = fs::remove_file(git_storage_folder_path.join(&self.name)) {
             return Err(ExecutionError::RemoveFile(err.to_string()).into());
         }
 

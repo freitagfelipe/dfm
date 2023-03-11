@@ -72,14 +72,17 @@ pub fn setup() -> Result<(), CommandError> {
         return Err(ExecutionError::CreateStorageFolder(err.to_string()).into());
     }
 
-    let storage_folder_path = match git_storage_folder_path.canonicalize() {
+    let git_storage_folder_path = match git_storage_folder_path.canonicalize() {
         Ok(path) => path,
         Err(err) => {
             return Err(ExecutionError::CanonicalizePath(err.to_string()).into());
         }
     };
 
-    execute_git_commands(&storage_folder_path)?;
+    GitCommandExecuterBuilder::new(&git_storage_folder_path)
+        .run_init()
+        .build()
+        .run()?;
 
     Ok(())
 }

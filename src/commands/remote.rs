@@ -82,7 +82,7 @@ fn set_remote_link(
         }
     };
 
-    if let Err(err) = file.write_all(link.as_bytes()) {
+    if let Err(err) = write!(file, "{link}") {
         return Err(ExecutionError::WriteToFile(err.to_string()).into());
     }
 
@@ -122,7 +122,7 @@ fn show_remote_link(storage_folder_path: &Path) -> Result<String, CommandError> 
 
 impl Command for Remote {
     fn execute(self) -> Result<String, CommandError> {
-        let storage_folder_path = match utils::get_storage_folder_path() {
+        let storage_folder_path = match utils::get_dfm_folder_path() {
             Ok(path) => path,
             Err(err) => {
                 return Err(ExecutionError::GetStorageFolderPath(err.to_string()).into());
