@@ -1,6 +1,6 @@
 use super::Command;
 use crate::error::{CommandError, ExecutionError};
-use crate::git::ExecuterBuilder;
+use crate::git::GitCommandExecuterBuilder;
 use crate::utils;
 use clap::Args;
 use std::fs;
@@ -55,7 +55,7 @@ impl Command for Remove {
             return Err(ExecutionError::RemoveFile(err.to_string()).into());
         }
 
-        ExecuterBuilder::new(&git_storage_folder_path)
+        GitCommandExecuterBuilder::new(&git_storage_folder_path)
             .run_commit(&format!("Remove {}", self.name))
             .build()
             .run()?;

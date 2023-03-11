@@ -1,6 +1,6 @@
 use super::Command;
 use crate::error::{CommandError, ExecutionError};
-use crate::git::ExecuterBuilder;
+use crate::git::GitCommandExecuterBuilder;
 use crate::utils;
 use clap::{Args, Subcommand};
 use regex::Regex;
@@ -80,7 +80,7 @@ fn set_remote_link(
         return Err(ExecutionError::WriteToFile(err.to_string()).into());
     }
 
-    ExecuterBuilder::new(git_storage_folder_path)
+    GitCommandExecuterBuilder::new(git_storage_folder_path)
         .run_remote_add(link)
         .run_pull()
         .build()

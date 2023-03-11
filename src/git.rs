@@ -2,7 +2,17 @@ use crate::error::ExecutionError;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
 
-pub struct Executer<'a> {
+pub struct GitCommandExecuter<'a> {
+    git_storage_folder_path: &'a Path,
+    commit_message: String,
+    remote_link: String,
+    run_init: bool,
+    run_remote_add: bool,
+    run_pull: bool,
+    run_commit: bool,
+}
+
+pub struct GitCommandExecuterBuilder<'a> {
     git_storage_folder_path: &'a Path,
     commit_message: String,
     remote_link: String,
@@ -26,7 +36,7 @@ impl From<GitError> for ExecutionError {
     }
 }
 
-impl Executer<'_> {
+impl GitCommandExecuter<'_> {
     pub fn run(self) -> Result<(), ExecutionError> {
         if self.run_init {
             if let Err(err) = init(self.git_storage_folder_path)?.wait() {
@@ -84,19 +94,9 @@ impl Executer<'_> {
     }
 }
 
-pub struct ExecuterBuilder<'a> {
-    git_storage_folder_path: &'a Path,
-    commit_message: String,
-    remote_link: String,
-    run_init: bool,
-    run_remote_add: bool,
-    run_pull: bool,
-    run_commit: bool,
-}
-
-impl<'a> ExecuterBuilder<'a> {
+impl<'a> GitCommandExecuterBuilder<'a> {
     pub fn new(git_storage_folder_path: &'a Path) -> Self {
-        ExecuterBuilder {
+        GitCommandExecuterBuilder {
             git_storage_folder_path,
             run_init: false,
             commit_message: String::new(),
@@ -133,8 +133,8 @@ impl<'a> ExecuterBuilder<'a> {
         self
     }
 
-    pub fn build(self) -> Executer<'a> {
-        Executer {
+    pub fn build(self) -> GitCommandExecuter<'a> {
+        GitCommandExecuter {
             git_storage_folder_path: self.git_storage_folder_path,
             run_init: self.run_init,
             commit_message: self.commit_message,

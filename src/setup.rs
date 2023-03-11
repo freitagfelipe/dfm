@@ -1,5 +1,5 @@
 use crate::error::{CommandError, ExecutionError};
-use crate::git::ExecuterBuilder;
+use crate::git::GitCommandExecuterBuilder;
 use crate::utils;
 use std::fs;
 use std::path::Path;
@@ -46,7 +46,7 @@ fn check_if_git_is_installed() -> Result<(), CommandError> {
 }
 
 pub fn execute_git_commands(git_storage_folder_path: &Path) -> Result<(), ExecutionError> {
-    ExecuterBuilder::new(git_storage_folder_path)
+    GitCommandExecuterBuilder::new(git_storage_folder_path)
         .run_init()
         .build()
         .run()?;

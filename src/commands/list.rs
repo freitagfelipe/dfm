@@ -1,6 +1,6 @@
 use super::Command;
 use crate::error::{CommandError, ExecutionError};
-use crate::git::ExecuterBuilder;
+use crate::git::GitCommandExecuterBuilder;
 use crate::utils;
 use clap::Args;
 use colored::Colorize;
@@ -46,7 +46,7 @@ impl Command for List {
             return Err(Error::SetRemoteRepository.into());
         }
 
-        if let Err(err) = ExecuterBuilder::new(&git_storage_folder_path)
+        if let Err(err) = GitCommandExecuterBuilder::new(&git_storage_folder_path)
             .run_pull()
             .build()
             .run()

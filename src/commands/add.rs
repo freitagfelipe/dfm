@@ -1,6 +1,6 @@
 use super::Command;
 use crate::error::{CommandError, ExecutionError};
-use crate::git::ExecuterBuilder;
+use crate::git::GitCommandExecuterBuilder;
 use crate::utils;
 use clap::Args;
 use std::env;
@@ -78,7 +78,7 @@ impl Command for Add {
             return Err(ExecutionError::CopyFile(err.to_string()).into());
         }
 
-        ExecuterBuilder::new(&git_storage_folder_path)
+        GitCommandExecuterBuilder::new(&git_storage_folder_path)
             .run_commit(&format!("Add {}", self.name))
             .build()
             .run()?;
