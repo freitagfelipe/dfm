@@ -1,6 +1,6 @@
 # Dot File Manager
 
-- DFM, acronym for Dot File Manager, is an easy-to-use application that has, as a primary objective, help you with the management of your dotfiles. It was thinked to work with one and only one remote repository.
+- DFM, acronym for Dot File Manager, is an easy-to-use application that has, as a primary objective, help you with the management of your dotfiles. It was thinked to work with one and only one remote repository. DFM uses Git to keep everything synchronized, so internet connection is needed if you are making changes to the repository.
 
 ## How DFM was made
 
@@ -57,6 +57,12 @@ $ dfm reset
 
 ```
 $ dfm clone <file-name>
+```
+
+### Synchronize your repository with the remote repository (use that if your list command is out of date)
+
+```
+$ dfm sync
 ```
 
 ### Get DFM's current version
