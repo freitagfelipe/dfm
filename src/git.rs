@@ -8,6 +8,7 @@ pub struct GitCommandExecuter<'a> {
     remote_link: String,
     run_init: bool,
     run_remote_add: bool,
+    run_remote_remove: bool,
     run_pull: bool,
     run_commit: bool,
 }
@@ -18,6 +19,7 @@ pub struct GitCommandExecuterBuilder<'a> {
     remote_link: String,
     run_init: bool,
     run_remote_add: bool,
+    run_remote_remove: bool,
     run_pull: bool,
     run_commit: bool,
 }
@@ -40,6 +42,17 @@ impl GitCommandExecuter<'_> {
     pub fn run(self) -> Result<(), ExecutionError> {
         if self.run_init && !init(self.git_storage_folder_path)?.status.success() {
             return Err(ExecutionError::NoSuccess("git init"));
+        }
+
+        if self.run_remote_remove {
+            if !remote_remove(self.git_storage_folder_path)?
+                .status
+                .success()
+            {
+                return Err(ExecutionError::NoSuccess("git remote remove"));
+            }
+
+            return Ok(());
         }
 
         if self.run_remote_add
@@ -89,6 +102,7 @@ impl<'a> GitCommandExecuterBuilder<'a> {
             run_commit: false,
             run_remote_add: false,
             run_pull: false,
+            run_remote_remove: false,
         }
     }
 
@@ -111,6 +125,12 @@ impl<'a> GitCommandExecuterBuilder<'a> {
         self
     }
 
+    pub fn run_remote_remove(mut self) -> Self {
+        self.run_remote_remove = true;
+
+        self
+    }
+
     pub fn run_remote_add(mut self, link: impl Into<String>) -> Self {
         self.run_remote_add = true;
         self.remote_link = link.into();
@@ -127,6 +147,7 @@ impl<'a> GitCommandExecuterBuilder<'a> {
             run_commit: self.run_commit,
             run_remote_add: self.run_remote_add,
             run_pull: self.run_pull,
+            run_remote_remove: self.run_remote_remove,
         }
     }
 }
@@ -203,6 +224,26 @@ fn push(git_storage_folder_path: &Path) -> Result<Output, GitError> {
         Err(err) => {
             return Err(GitError {
                 command: "push",
+                err: err.to_string(),
+            });
+        }
+    };
+
+    Ok(output)
+}
+
+fn remote_remove(git_storage_folder_path: &Path) -> Result<Output, GitError> {
+    let output = match Command::new("git")
+        .args(["remote", "remove", "origin"])
+        .current_dir(git_storage_folder_path)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+    {
+        Ok(output) => output,
+        Err(err) => {
+            return Err(GitError {
+                command: "remote remove",
                 err: err.to_string(),
             });
         }

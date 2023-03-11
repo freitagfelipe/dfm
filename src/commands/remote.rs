@@ -19,6 +19,8 @@ pub enum Error {
     NotSetted,
     #[error("Not a ssh link")]
     NotSSH,
+    #[error("Invalid link for the remote repository")]
+    InvalidLink,
     #[error("No internet connection")]
     NoInternetConnection,
 }
@@ -75,6 +77,25 @@ fn set_remote_link(
         return Err(Error::NotSSH.into());
     }
 
+    GitCommandExecuterBuilder::new(git_storage_folder_path)
+        .run_remote_add(link)
+        .build()
+        .run()?;
+
+    if GitCommandExecuterBuilder::new(git_storage_folder_path)
+        .run_pull()
+        .build()
+        .run()
+        .is_err()
+    {
+        GitCommandExecuterBuilder::new(git_storage_folder_path)
+            .run_remote_remove()
+            .build()
+            .run()?;
+
+        return Err(Error::InvalidLink.into());
+    }
+
     let mut file = match File::create(storage_folder_path.join("remote.txt")) {
         Ok(file) => file,
         Err(err) => {
@@ -85,12 +106,6 @@ fn set_remote_link(
     if let Err(err) = write!(file, "{link}") {
         return Err(ExecutionError::WriteToFile(err.to_string()).into());
     }
-
-    GitCommandExecuterBuilder::new(git_storage_folder_path)
-        .run_remote_add(link)
-        .run_pull()
-        .build()
-        .run()?;
 
     Ok("Successfully setted the remote repository and synchronized the local repository with the remote repository".to_string())
 }
