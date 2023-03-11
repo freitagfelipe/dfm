@@ -4,7 +4,7 @@
 
 ## How DFM was made
 
-- DFM is written in Rust, using [CLAP](https://crates.io/crates/clap) to make the command line parsing process and others crates like:
+- DFM is written in Rust, using [clap](https://crates.io/crates/clap) to make the command line parsing process and others crates like:
     - [colored](https://crates.io/crates/colored)
     - [thiserror](https://crates.io/crates/thiserror)
     - [walkdir](https://crates.io/crates/walkdir)
