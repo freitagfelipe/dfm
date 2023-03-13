@@ -63,10 +63,36 @@ impl GitCommandExecuter<'_> {
             return Err(ExecutionError::NoSuccess("git remote add"));
         }
 
-        if (self.run_pull || self.run_commit)
-            && !pull(self.git_storage_folder_path)?.status.success()
-        {
-            return Err(ExecutionError::NoSuccess("git pull"));
+        if self.run_pull && self.run_remote_add {
+            let output = pull(self.git_storage_folder_path)?;
+
+            if output.status.success() {
+                return Ok(());
+            }
+
+            let output = pull(self.git_storage_folder_path)?.stderr;
+
+            let Ok(output) = String::from_utf8(output) else {
+                return Err(ExecutionError::InvalidUTF8("Convert Vec<u8> to String"));
+            };
+
+            if output.contains("Repository not found") {
+                return Err(ExecutionError::RepositoryNotFound);
+            }
+        } else if self.run_pull || self.run_commit {
+            let output = pull(self.git_storage_folder_path)?;
+
+            if !output.status.success() {
+                let output = pull(self.git_storage_folder_path)?.stderr;
+
+                let Ok(output) = String::from_utf8(output) else {
+                    return Err(ExecutionError::InvalidUTF8("Convert Vec<u8> to String"));
+                };
+
+                if !output.contains("couldn't find remote ref main") {
+                    return Err(ExecutionError::NoSuccess("git pull"));
+                }
+            }
         }
 
         if !self.run_commit {
@@ -276,8 +302,8 @@ fn pull(git_storage_folder_path: &Path) -> Result<Output, GitError> {
     let output = match Command::new("git")
         .args(["pull", "origin", "main"])
         .current_dir(git_storage_folder_path)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .output()
     {
         Ok(output) => output,

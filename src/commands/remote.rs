@@ -77,23 +77,22 @@ fn add_remote_link(
         return Err(Error::NotSSH.into());
     }
 
-    GitCommandExecuterBuilder::new(git_storage_folder_path)
+    if let Err(err) = GitCommandExecuterBuilder::new(git_storage_folder_path)
         .run_remote_add(link)
-        .build()
-        .run()?;
-
-    if GitCommandExecuterBuilder::new(git_storage_folder_path)
         .run_pull()
         .build()
         .run()
-        .is_err()
     {
         GitCommandExecuterBuilder::new(git_storage_folder_path)
             .run_remote_remove()
             .build()
             .run()?;
 
-        return Err(Error::InvalidLink.into());
+        if matches!(err, ExecutionError::RepositoryNotFound) {
+            return Err(Error::InvalidLink.into());
+        }
+
+        return Err(err.into());
     }
 
     let mut file = match File::create(storage_folder_path.join("remote.txt")) {
