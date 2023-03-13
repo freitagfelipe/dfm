@@ -1,3 +1,14 @@
+use colored::Colorize;
+use dfm::{cli, setup};
+
 fn main() {
-    println!("Hello, world!");
+    if let Err(err) = setup() {
+        eprintln!("{}", err.to_string().red());
+
+        return;
+    }
+
+    let cli = cli::parse();
+
+    cli.command.invoke();
 }
