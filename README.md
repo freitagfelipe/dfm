@@ -1,10 +1,10 @@
 # Dotfiles Manager
 
-- dfmnn, is an easy-to-use application that has, as a primary objective, help you with the management of your dotfiles. It was thinked to work with one and only one remote repository. dfmn uses Git to keep everything synchronized, so internet connection is needed if you are using commands that make changes to the repository.
+- dfmn, is an easy-to-use application that has, as a primary objective, help you with the management of your dotfiles. It was thinked to work with one and only one remote repository. dfmn uses Git to keep everything synchronized, so internet connection is needed if you are using commands that make changes to the repository.
 
-## How dfmnn was made
+## How dfmn was made
 
-- dfmnn is written in Rust, using [clap](https://crates.io/crates/clap) to make the command line parsing process and others crates like:
+- dfmn is written in Rust, using [clap](https://crates.io/crates/clap) to make the command line parsing process and others crates like:
     - [colored](https://crates.io/crates/colored)
     - [online](https://crates.io/crates/online)
     - [regex](https://crates.io/crates/regex)
