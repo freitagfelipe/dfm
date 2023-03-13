@@ -8,7 +8,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("You need to set a remote repository before use DFM")]
+    #[error("This action is unnecessary because you already are in the initial state")]
     SetRemoteRepository,
 }
 
@@ -24,6 +24,13 @@ pub struct Reset;
 
 impl Command for Reset {
     fn execute(self) -> Result<String, CommandError> {
+        let storage_folder_path = match utils::get_dfm_folder_path() {
+            Ok(path) => path,
+            Err(err) => {
+                return Err(ExecutionError::GetStorageFolderPath(err.to_string()).into());
+            }
+        };
+
         let git_storage_folder_path = match utils::get_git_storage_folder_path() {
             Ok(path) => path,
             Err(err) => {
@@ -44,6 +51,10 @@ impl Command for Reset {
 
         if let Err(err) = fs::remove_dir_all(&git_storage_folder_path) {
             return Err(ExecutionError::RemoveStorageFolder(err.to_string()).into());
+        }
+
+        if let Err(err) = fs::remove_file(storage_folder_path.join("remote.txt")) {
+            return Err(ExecutionError::RemoveFile(err.to_string()).into());
         }
 
         if let Err(err) = fs::create_dir_all(&git_storage_folder_path) {
