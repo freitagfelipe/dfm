@@ -1,10 +1,10 @@
-# Dot File Manager
+# Dotfiles Manager
 
-- DFM, acronym for Dot File Manager, is an easy-to-use application that has, as a primary objective, help you with the management of your dotfiles. It was thinked to work with one and only one remote repository. DFM uses Git to keep everything synchronized, so internet connection is needed if you are using commands that make changes to the repository.
+- dfmnn, is an easy-to-use application that has, as a primary objective, help you with the management of your dotfiles. It was thinked to work with one and only one remote repository. dfmn uses Git to keep everything synchronized, so internet connection is needed if you are using commands that make changes to the repository.
 
-## How DFM was made
+## How dfmnn was made
 
-- DFM is written in Rust, using [clap](https://crates.io/crates/clap) to make the command line parsing process and others crates like:
+- dfmnn is written in Rust, using [clap](https://crates.io/crates/clap) to make the command line parsing process and others crates like:
     - [colored](https://crates.io/crates/colored)
     - [online](https://crates.io/crates/online)
     - [regex](https://crates.io/crates/regex)
@@ -16,71 +16,71 @@
 ### Add a file from the current directory to the remote repository
 
 ```
-$ dfm add <file-name>
+$ dfmn add <file-name>
 ```
 
 ### List the files that are in the remote repository
 
 ```
-$ dfm list
+$ dfmn list
 ```
 
 ### Update a file that already is in the remote repository with a new version
 
 ```
-$ dfm update <file-name>
+$ dfmn update <file-name>
 ```
 
 ### Remove a file from the remote repository
 
 ```
-$ dfm remove <file-name>
+$ dfmn remove <file-name>
 ```
 
-### Show the the link of the remote repository that DFM is linked
+### Show the the link of the remote repository that dfmn is linked
 
 ```
-$ dfm remote show
+$ dfmn remote show
 ```
 
-### Set the remote repository that DFM will synchronize with
+### Set the remote repository that dfmn will synchronize with
 
 ```
-$ dfm remote set <repository-ssh-link>
+$ dfmn remote set <repository-ssh-link>
 ```
 
-### Reset the DFM to the initial state (you will use that if you want to synchronize DFM with another repository)
+### Reset the dfmn to the initial state (you will use that if you want to synchronize dfmn with another repository)
 
 ```
-$ dfm reset
+$ dfmn reset
 ```
 
 ### Clone a file from the remote repository to your current repository
 
 ```
-$ dfm clone <file-name>
+$ dfmn clone <file-name>
 ```
 
 ### Synchronize your repository with the remote repository (use that if your list command is out of date)
 
 ```
-$ dfm sync
+$ dfmn sync
 ```
 
-### Get DFM's current version
+### Get dfmn's current version
 
 ```
-$ dfm --version
+$ dfmn --version
 ```
 
 ## How to install
 
-- You can install DFM on your computer with cargo just typing ```cargo install dfm```. If you do not have cargo in your computer you can just follow this Rust [installation guide](https://www.rust-lang.org/tools/install).
+- You can install dfmn on your computer with cargo just typing ```cargo install dfmn```. If you do not have cargo in your computer you can just follow this Rust [installation guide](https://www.rust-lang.org/tools/install).
 
 ## Troubleshooting
 
-- If after the installation you can not execute DFM correctly in your terminal you can just open an issue and I will try to help.
+- If after the installation you can not execute dfmn correctly in your terminal you can just open an issue and I will try to help.
 
-## Uninstalling DFM
+## Uninstalling dfmn
 
-- Just type ```cargo uninstall dfm```.
+- Just type ```cargo uninstall dfmn```.

@@ -8,7 +8,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("You need to have git installed to use DFM")]
+    #[error("You need to have git installed to use dfmn")]
     NeedGit,
 }
 

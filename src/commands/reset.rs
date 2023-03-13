@@ -18,7 +18,7 @@ impl From<Error> for CommandError {
     }
 }
 
-/// Resets your DFM to the initial state (be careful using that)
+/// Resets your dfmn to the initial state (be careful using that)
 #[derive(Debug, Args)]
 pub struct Reset;
 
@@ -63,6 +63,6 @@ impl Command for Reset {
 
         setup::execute_git_commands(&git_storage_folder_path)?;
 
-        Ok("Successfully reseted the DFM to the initial state".to_string())
+        Ok("Successfully reseted the dfmn to the initial state".to_string())
     }
 }

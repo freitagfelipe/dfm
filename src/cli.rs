@@ -13,7 +13,7 @@ pub enum Commands {
     Sync(commands::Sync),
 }
 
-/// DFM - Dot File Manager
+/// dfmn - dotfiles Manager
 #[derive(Parser)]
 #[command(version)]
 pub struct CLI {

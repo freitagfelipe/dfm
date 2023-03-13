@@ -17,7 +17,7 @@ pub enum Error {
     FileNotAdded,
     #[error("Nothing to update")]
     NothingToUpdate,
-    #[error("You need to set a remote repository before use DFM")]
+    #[error("You need to set a remote repository before use dfmn")]
     SetRemoteRepository,
     #[error("No internet connection")]
     NoInternetConnection,

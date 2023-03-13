@@ -1,9 +1,9 @@
 [package]
-name = "dfm"
+name = "dfmn"
 version = "0.1.0"
 edition = "2021"
 authors = ["Felipe Rodrigues de Santana Freitag"]
-repository = "https://github.com/freitagfelipe/dfm"
+repository = "https://github.com/freitagfelipe/dfmn"
 license = "MIT"
 readme = "README.md"
 description = "A simple and easy-to-use dotfile manager"

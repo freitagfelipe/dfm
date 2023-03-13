@@ -7,7 +7,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("You need to set a remote repository before use DFM")]
+    #[error("You need to set a remote repository before use dfmn")]
     SetRemoteRepository,
     #[error("No internet connection")]
     NoInternetConnection,

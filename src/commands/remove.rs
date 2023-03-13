@@ -10,7 +10,7 @@ use thiserror::Error;
 pub enum Error {
     #[error("File does not exist in the repository")]
     FileDoesNotExists,
-    #[error("You need to set a remote repository before use DFM")]
+    #[error("You need to set a remote repository before use dfmn")]
     SetRemoteRepository,
     #[error("No internet connection")]
     NoInternetConnection,
