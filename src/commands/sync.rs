@@ -19,7 +19,7 @@ impl From<Error> for CommandError {
     }
 }
 
-/// Syncs with the remote repository
+/// Syncs the files with the remote repository
 #[derive(Debug, Args)]
 pub struct Sync;
 

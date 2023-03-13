@@ -31,16 +31,16 @@ impl From<Error> for CommandError {
     }
 }
 
-/// Manages the remote repository
+/// Manages the remote repository link
 #[derive(Debug, Args)]
 pub struct Remote {
     #[command(subcommand)]
     subcommands: Subcommands,
 }
 
-/// Sets the remote repository to the passed link (you can only do that once without resetting DFM)
+/// Adds a remote repository to the passed link (you can only do that once without resetting DFM)
 #[derive(Debug, Args)]
-pub struct Set {
+pub struct Add {
     /// Remote repository link
     link: String,
 }
@@ -49,11 +49,11 @@ pub struct Set {
 pub enum Subcommands {
     /// Shows the current remote repository
     Show,
-    /// Sets (if not setted yet) the remote repository
-    Set(Set),
+    /// Adds a remote repository to the passed link (you can only do that once without resetting DFM)
+    Add(Add),
 }
 
-fn set_remote_link(
+fn add_remote_link(
     storage_folder_path: &Path,
     git_storage_folder_path: &Path,
     link: &str,
@@ -153,10 +153,10 @@ impl Command for Remote {
 
         match self.subcommands {
             Subcommands::Show => show_remote_link(&storage_folder_path),
-            Subcommands::Set(set) => set_remote_link(
+            Subcommands::Add(add) => add_remote_link(
                 &storage_folder_path,
                 &storage_folder_path.join("dotfiles"),
-                &set.link,
+                &add.link,
             ),
         }
     }
