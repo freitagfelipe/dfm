@@ -12,7 +12,7 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum Error {
     #[error(
-        "Remote repository already added if you want to change that you need to reset your DFM"
+        "Remote repository already added if you want to change that you need to reset your dfmn"
     )]
     AlreadyAdded,
     #[error("Remote repository not setted yet")]
@@ -38,7 +38,7 @@ pub struct Remote {
     subcommands: Subcommands,
 }
 
-/// Adds a remote repository to the passed link (you can only do that once without resetting DFM)
+/// Adds a remote repository to the passed link (you can only do that once without resetting dfmn)
 #[derive(Debug, Args)]
 pub struct Add {
     /// Remote repository link
@@ -49,7 +49,7 @@ pub struct Add {
 pub enum Subcommands {
     /// Shows the current remote repository
     Show,
-    /// Adds a remote repository to the passed link (you can only do that once without resetting DFM)
+    /// Adds a remote repository to the passed link (you can only do that once without resetting dfmn)
     Add(Add),
 }
 

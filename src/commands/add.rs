@@ -15,7 +15,7 @@ pub enum Error {
     FileDoesNotExists,
     #[error("You can just add files to the repository")]
     NotAFile,
-    #[error("You need to set a remote repository before use DFM")]
+    #[error("You need to set a remote repository before use dfmn")]
     SetRemoteRepository,
     #[error("No internet connection")]
     NoInternetConnection,

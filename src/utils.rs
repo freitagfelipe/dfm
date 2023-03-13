@@ -7,7 +7,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("You need to set a remote repository before use DFM")]
+    #[error("You need to set a remote repository before use dfmn")]
     SetRemoteRepository,
 }
 
@@ -29,7 +29,7 @@ pub fn get_dfm_folder_path() -> Result<PathBuf, ExecutionError> {
             }
         };
 
-        Ok(PathBuf::from(format!("{home_path}/.config/DFM")))
+        Ok(PathBuf::from(format!("{home_path}/.config/dfmn")))
     } else {
         let home_path = match env::var("APPDATA") {
             Ok(env) => env,
@@ -41,7 +41,7 @@ pub fn get_dfm_folder_path() -> Result<PathBuf, ExecutionError> {
             }
         };
 
-        Ok(PathBuf::from(format!("{home_path}\\DFM")))
+        Ok(PathBuf::from(format!("{home_path}\\dfmn")))
     }
 }
 

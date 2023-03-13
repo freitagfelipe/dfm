@@ -1,5 +1,5 @@
 use colored::Colorize;
-use dfm::{cli, setup};
+use dfmn::{cli, setup};
 
 fn main() {
     if let Err(err) = setup() {

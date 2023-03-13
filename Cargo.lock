@@ -83,7 +83,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "dfm"
+name = "dfmn"
 version = "0.1.0"
 dependencies = [
  "clap",
